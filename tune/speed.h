@@ -1430,7 +1430,8 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
 	if (s->size % 3 == 0) {nk = s->size / (k = 3);}			\
 	else if (s->size % 5 == 0) {nk = s->size / (k = 5);}		\
 	else if (s->size % 7 == 0) {nk = s->size / (k = 7);}		\
-	else if (s->size % 11 == 0) {nk = s->size / (k = 11);}		\
+	else if ((MOD_BKNP1_USE11) && (s->size % 11 == 0))		\
+	  {nk = s->size / (k = 11);}					\
 	else if (s->size % 13 == 0) {nk = s->size / (k = 13);}		\
 	else if (s->size % 17 == 0) {nk = s->size / (k = 17);}		\
 	else nk = s->size / (k = 1);					\
