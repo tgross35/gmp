@@ -1,3 +1,8 @@
+2026-02-21  Marco Bodrato <bodrato@mail.dm.unipi.it>
+
+	* mpz/millerrabin.c: Improve description of the code with comments,
+	change a parameter to mpz_srcptr. Update also tested values.
+
 2025-09-24  Niels Möller  <nisse@lysator.liu.se>
 
 	* bootstrap.c (MINI_GMP_ENABLE_FLOAT): Define to 0. Replaces...
