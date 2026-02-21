@@ -88,6 +88,13 @@ mod_eq_m1 (mpz_srcptr x, mpz_srcptr m)
     }
 }
 
+/* Performs a Miller-Rabin test, on the number n, with base x.
+ * The value q is the odd number such that (q<<k) + 1 = n.
+ *
+ * The variable y is overwritten, it's only role is to reuse the same
+ * temp variable.
+ */
+
 static int
 millerrabin (mpz_srcptr n, mpz_srcptr x, mpz_ptr y,
 	     mpz_srcptr q, mp_bitcnt_t k)
