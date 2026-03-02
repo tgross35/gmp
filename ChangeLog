@@ -6,7 +6,9 @@
 	* tune/speed.h (SPEED_ROUTINE_MPN_MULMOD_BNP1_CALL):
 	Use k=11 only when available.
 
-	* tune/speed.h (SPEED_ROUTINE_MPN_PERFECT_SQUARE): Support size 1.
+	* tune/speed.c (mpn_perfect_square_p): Add FLAG_R_OPTIONAL.
+	* tune/speed.h (SPEED_ROUTINE_MPN_PERFECT_SQUARE): Support size 1,
+	and zero lower limbs, depending on FLAG_R.
 
 2025-09-24  Niels Möller  <nisse@lysator.liu.se>
 
