@@ -3656,7 +3656,8 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     double    t;							\
 									\
     SPEED_RESTRICT_COND (s->size >= 1);					\
-    mpz_init_set_n (r, s->xp, (s->size + 1) / 2);			\
+    mpz_init_set_n (r, s->xp, MAX((s->size + 1), s->r) / 2 - s->r / 2);	\
+    mpz_mul_2exp (r, r, MIN (s->r, s->size) * GMP_NUMB_BITS / 2);	\
     mpz_fdiv_r_2exp (r, r, s->size * GMP_NUMB_BITS / 2);		\
     mpz_setbit (r, s->size * GMP_NUMB_BITS / 2 - 1);			\
     mpz_mul (r, r, r);							\
