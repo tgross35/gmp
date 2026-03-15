@@ -260,4 +260,6 @@ testmain (int argc, char **argv)
     }
   mpq_clear (a);
   mpq_clear (b);
+
+  fclose (tmp);
 }

@@ -47,7 +47,7 @@ _mpq_set_zz (mpq_t q, mpz_t n, mpz_t d)
 }
 
 void
-testcmpui ()
+testcmpui (void)
 {
   unsigned d1, d2, n1, n2;
   mpq_t q1, q2;
