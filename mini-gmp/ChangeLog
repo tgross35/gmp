@@ -1,3 +1,9 @@
+2026-03-15  Marco Bodrato <bodrato@mail.dm.unipi.it>
+
+	* tests/hex-random.c (hex_random_clear): New function.
+	* tests/hex-random.h: Add declaration of hex_random_clear.
+	* tests/testutils.c (main): Free memory with hex_random_clear.
+
 2025-09-24  Niels Möller  <nisse@lysator.liu.se>
 
 	* mini-gmp.c (MINI_GMP_ENABLE_FLOAT): New knob, to disable
