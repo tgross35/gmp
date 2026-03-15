@@ -30,6 +30,7 @@ enum hex_random_op
   };
 
 void hex_random_init (void);
+void hex_random_clear (void);
 char *hex_urandomb (unsigned long bits);
 char *hex_rrandomb (unsigned long bits);
 char *hex_rrandomb_export (void *dst, size_t *countp,

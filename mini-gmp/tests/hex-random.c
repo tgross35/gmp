@@ -116,6 +116,12 @@ hex_random_init (void)
   mpz_clear (seed);
 }
 
+void
+hex_random_clear (void)
+{
+  gmp_randclear (state);
+}
+
 char *
 hex_urandomb (unsigned long bits)
 {

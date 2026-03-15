@@ -143,6 +143,8 @@ main (int argc, char **argv)
 	       (unsigned long) total_alloc);
       abort ();
     }
+
+  hex_random_clear ();
   return 0;
 }
 
