@@ -1,3 +1,8 @@
+2026-04-04  Marc Glisse <marc.glisse@inria.fr>
+
+	* gmpxx.h (operator""): Remove deprecated space.
+	* doc/gmp.texi: Likewise.
+
 2026-02-21  Marco Bodrato <bodrato@mail.dm.unipi.it>
 
 	* mpz/millerrabin.c: Improve description of the code with comments,
