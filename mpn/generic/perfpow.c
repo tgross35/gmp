@@ -259,8 +259,7 @@ mpn_perfect_power_p (mp_srcptr np, mp_size_t n)
       n = -n;
     }
 
-  if (n == 0 || (n == 1 && np[0] == 1)) /* Valgrind doesn't like
-					   (n <= (np[0] == 1)) */
+  if (n <= (np[0] == 1)) /* n == 0 || (n == 1 && np[0] == 1) */
     return 1;
 
   TMP_MARK;
