@@ -121,7 +121,7 @@ is_kth_power (mp_ptr rp, mp_srcptr np,
 	      mp_ptr tp)
 {
   mp_bitcnt_t b;
-  mp_size_t rn, xn;
+  mp_size_t rn;
 
   ASSERT (n > 0);
   ASSERT ((k & 1) != 0 || k == 2);
@@ -133,16 +133,22 @@ is_kth_power (mp_ptr rp, mp_srcptr np,
       rn = 1 + b / GMP_LIMB_BITS;
       if (mpn_bsqrtinv (rp, ip, b, tp) != 0)
 	{
+	  /* There are two possible results of bsqrt, {rp, rn} and its negation.
+	     We don't need to test both, only the one with the most significant
+	     bit in the right position can be the square root of {np, n}. */
+	  if (! (rp [rn - 1 - (b % GMP_LIMB_BITS == 0)] &
+		 CNST_LIMB(1) << (b-1) % GMP_LIMB_BITS))
+	    {
+	      /* Check if (2^b - r)^2 == n, i.e. mpn_neg (rp, rp, rn); */
+	      *rp ^= CNST_LIMB (1);
+	      mpn_com (rp, rp, rn);
+	    }
 	  rp[rn - 1] &= (CNST_LIMB(1) << (b % GMP_LIMB_BITS)) - 1;
-	  xn = rn;
-	  MPN_NORMALIZE (rp, xn);
-	  if (pow_equals (np, n, rp, xn, k, f, tp) != 0)
-	    return 1;
-
-	  /* Check if (2^b - r)^2 == n */
-	  mpn_neg (rp, rp, rn);
-	  rp[rn - 1] &= (CNST_LIMB(1) << (b % GMP_LIMB_BITS)) - 1;
-	  MPN_NORMALIZE (rp, rn);
+	  rn -= (b % GMP_LIMB_BITS == 0); /* Normalize */
+	  ASSERT (rp[rn - 1] != 0);
+	  ASSERT (rn == (n + 1) >> 1);
+	  /* mpn_sqr (tp, rp, rn); */
+	  /* if (mpn_cmp (np, tp, n) == 0) */
 	  if (pow_equals (np, n, rp, rn, k, f, tp) != 0)
 	    return 1;
 	}
