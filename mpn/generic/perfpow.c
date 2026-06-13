@@ -216,7 +216,7 @@ perfpow (mp_srcptr np, mp_size_t n,
 	      if (is_kth_power (rp, np, k, ip, n, f, tp) != 0)
 		{
 		  ans = 1;
-		  goto ret;
+		  break;
 		}
 	    }
 	}
@@ -228,11 +228,10 @@ perfpow (mp_srcptr np, mp_size_t n,
 	  if (is_kth_power (rp, np, k, ip, n, f, tp) != 0)
 	    {
 	      ans = 1;
-	      goto ret;
+	      break;
 	    }
 	}
     }
- ret:
   TMP_FREE;
   return ans;
 }
