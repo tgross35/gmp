@@ -317,6 +317,7 @@ double speed_mpn_mu_bdiv_q (struct speed_params *);
 double speed_mpn_mu_bdiv_qr (struct speed_params *);
 double speed_mpn_broot (struct speed_params *);
 double speed_mpn_broot_invm1 (struct speed_params *);
+double speed_mpn_bsqrtinv (struct speed_params *);
 double speed_mpn_brootinv (struct speed_params *);
 double speed_mpn_invert (struct speed_params *);
 double speed_mpn_invertappr (struct speed_params *);
@@ -2250,6 +2251,41 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     s->xp[0] |= 1;				\
     SPEED_ROUTINE_MPN_UNARY_1_CALL		\
       ((*function) (wp, s->xp, s->size, s->r));	\
+  }
+
+#define SPEED_ROUTINE_MPN_BSQRTINV(function, itch)			\
+  {									\
+    mp_ptr    rp, yp, tp;						\
+    unsigned  i;							\
+    double    t;							\
+    mp_bitcnt_t bnb;							\
+    TMP_DECL;								\
+									\
+    SPEED_RESTRICT_COND (s->size >= 1);					\
+    bnb = (s->size * GMP_LIMB_BITS + 1)/ 2; /* Comparable with sqrt */	\
+									\
+    TMP_MARK;								\
+    SPEED_TMP_ALLOC_LIMBS (yp,	s->size, s->align_yp);			\
+    SPEED_TMP_ALLOC_LIMBS (rp, (s->size + 3) >> 1, s->align_wp);	\
+    SPEED_TMP_ALLOC_LIMBS (tp, (itch), s->align_xp);			\
+    /* Operand must be a square mod 8 */				\
+    MPN_COPY (yp, s->yp, s->size);					\
+    yp[0] |= 7;	yp[0] ^= 6;						\
+									\
+    speed_operand_src (s, yp, (s->size + 1) >> 1);			\
+    speed_operand_dst (s, rp, (s->size + 3) >> 1);			\
+    speed_operand_src (s, tp, (itch));					\
+    speed_cache_fill (s);						\
+									\
+    speed_starttime ();							\
+    i = s->reps;							\
+    do									\
+      mpn_bsqrtinv (rp, yp, bnb, tp);					\
+    while (--i != 0);							\
+    t = speed_endtime ();						\
+									\
+    TMP_FREE;								\
+    return t;								\
   }
 
 #define SPEED_ROUTINE_MPN_BROOTINV(function, itch)	\

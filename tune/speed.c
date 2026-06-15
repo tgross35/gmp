@@ -407,6 +407,7 @@ const struct routine_t {
 
   { "mpn_broot",               speed_mpn_broot,    FLAG_R },
   { "mpn_broot_invm1",         speed_mpn_broot_invm1, FLAG_R },
+  { "mpn_bsqrtinv",            speed_mpn_bsqrtinv         },
   { "mpn_brootinv",            speed_mpn_brootinv, FLAG_R },
 
   { "mpn_get_str",          speed_mpn_get_str,     FLAG_R_OPTIONAL },
