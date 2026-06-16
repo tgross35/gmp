@@ -72,11 +72,20 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
     }
   else
     {
-      if ((yp[0] & 7) != 1)
+      mp_limb_t t0, r0, y0 = *yp;
+
+      if ((y0 & 7) != 1)
 	return 0;
 
+      r0 = 33 + ((y0 & 8) * 5 >> 2) - ((y0 & 16) >> 1);
+      do {
+	t0 = r0 * r0 * y0 >> 1;
+	r0 -= r0 * t0;
+      } while ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS >> 1))) != 0);
+      *rp = r0 & GMP_NUMB_MAX;
+
       d = 0;
-      for (; bnb != 2; bnb = (bnb + 2) >> 1)
+      for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
 	order[d++] = bnb;
 
       for (i = d - 1; i >= 0; i--)
