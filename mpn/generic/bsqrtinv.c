@@ -45,7 +45,7 @@ see https://www.gnu.org/licenses/.  */
      (1) Simplify to do precision book-keeping in limbs rather than bits.
 
      (2) Rewrite iteration as
-	   r' <-- r - r (r^2 y - 1) / 2
+	   r' <-- r - r (r^2 y - 1) / 2  [Done]
 	 and take advantage of zero low part of r^2 y - 1.
 
      (3) Use wrap-around trick.
@@ -153,6 +153,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 #endif
 
+      mpn_zero (rp + 1, bnb / GMP_NUMB_BITS);
       i = 0;
       for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
 	order[i++] = bnb;
@@ -180,24 +181,21 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	return 1;
       }
 
-      for (; --i >= 0;)
+      for (bn = 2; --i >= 0;)
 	{
+	  mp_size_t pbn = bn;
+	  mpn_sqr (tp, rp, bn); /* tp <- r^2 */
+
 	  bnb = order[i];
 	  bn = 1 + bnb / GMP_LIMB_BITS;
 
-	  mpn_sqrlo (tp, rp, bn);
-	  mpn_mullo_n (tp2, rp, tp, bn); /* tp2 <- rp ^ 3 */
+	  mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
+	  ASSERT_CARRY (mpn_rshift (tp2, tp2, bn, 1)); /* tp2 <- (rp^2 y - 1) / 2 */
+	  ASSERT ((pbn == 1) || mpn_zero_p (tp2, pbn - 1));
 
-	  mpn_mul_1 (tp, rp, bn, 3);
+	  mpn_mullo_n (tp, rp, tp2, bn); /* tp <- r (r^2 y - 1) / 2 */
 
-	  mpn_mullo_n (rp, yp, tp2, bn);
-
-#if HAVE_NATIVE_mpn_rsh1sub_n
-	  mpn_rsh1sub_n (rp, tp, rp, bn);
-#else
-	  mpn_sub_n (tp2, tp, rp, bn);
-	  mpn_rshift (rp, tp2, bn, 1);
-#endif
+	  mpn_sub_n (rp, rp, tp, bn); /* rp <- r - r (r^2 y - 1) / 2 */
 	}
     }
   return 1;
