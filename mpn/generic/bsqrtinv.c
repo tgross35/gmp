@@ -54,15 +54,7 @@ see https://www.gnu.org/licenses/.  */
 int
 mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 {
-  mp_ptr tp2;
-  mp_size_t bn, order[GMP_LIMB_BITS + 1];
-  int i, d;
-
   ASSERT (bnb > 0);
-
-  bn = 1 + bnb / GMP_LIMB_BITS;
-
-  tp2 = tp + bn;
 
   rp[0] = 1;
   if (bnb == 1)
@@ -72,22 +64,52 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
     }
   else
     {
+      mp_ptr tp2 = tp + 1 + bnb / GMP_NUMB_BITS;
+      mp_size_t bn = 1, order[GMP_LIMB_BITS + 1];
       mp_limb_t t0, r0, y0 = *yp;
+      int i, d;
 
       if ((y0 & 7) != 1)
 	return 0;
 
       r0 = 33 + ((y0 & 8) * 5 >> 2) - ((y0 & 16) >> 1);
-      do {
-	t0 = r0 * r0 * y0 >> 1;
-	r0 -= r0 * t0;
-      } while ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS >> 1))) != 0);
-      *rp = r0 & GMP_NUMB_MAX;
+
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 4))) == 0);
+#if GMP_NUMB_BITS >= 7 * 2 - 1
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 7))) == 0);
+#if GMP_NUMB_BITS >= 13 * 2 - 1
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & GMP_NUMB_MAX >> (GMP_NUMB_BITS - 13)) == 0);
+#if GMP_NUMB_BITS >= 25 * 2 - 1
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & GMP_NUMB_MAX >> (GMP_NUMB_BITS - 25)) == 0);
+
+      const mp_bitcnt_t precomputed_bits = 49;
+#else /* GMP_NUMB_BITS < 25 * 2 - 1 */
+      const mp_bitcnt_t precomputed_bits = 25;
+#endif
+#else /* GMP_NUMB_BITS < 13 * 2 - 1 */
+      const mp_bitcnt_t precomputed_bits = 13;
+#endif
+#else /* GMP_NUMB_BITS < 7 * 2 - 1 */
+      const mp_bitcnt_t precomputed_bits = 7;
+#endif
 
       d = 0;
       for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
 	order[d++] = bnb;
-
+      if (bnb > precomputed_bits) {
+	t0 = r0 * r0 * y0 >> 1;
+	r0 -= r0 * t0;
+	ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
+      }
+      *rp = r0 & GMP_NUMB_MAX;
       for (i = d - 1; i >= 0; i--)
 	{
 	  bnb = order[i];
