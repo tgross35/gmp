@@ -46,7 +46,7 @@ see https://www.gnu.org/licenses/.  */
 
      (2) Rewrite iteration as
 	   r' <-- r - r (r^2 y - 1) / 2  [Done]
-	 and take advantage of zero low part of r^2 y - 1.
+	 and take advantage of zero low part of r^2 y - 1. [Done]
 
      (3) Use wrap-around trick.
 
@@ -190,12 +190,22 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  bn = 1 + bnb / GMP_LIMB_BITS;
 
 	  mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
-	  ASSERT_CARRY (mpn_rshift (tp2, tp2, bn, 1)); /* tp2 <- (rp^2 y - 1) / 2 */
-	  ASSERT ((pbn == 1) || mpn_zero_p (tp2, pbn - 1));
+	  mpn_rshift (tp2+pbn-1, tp2+pbn-1, bn-pbn+1, 1); /* tp2 <- (rp^2 y - 1) / 2 */
 
-	  mpn_mullo_n (tp, rp, tp2, bn); /* tp <- r (r^2 y - 1) / 2 */
+	  if (pbn <= bn - pbn)
+	    mpn_mul (tp, tp2 + pbn - 1, bn - pbn + 1, rp, pbn);
+	  else
+	    mpn_mul (tp, rp, pbn, tp2 + pbn - 1, bn - pbn + 1);
+	  /* tp <- r (r^2 y - 1) / 2 */
 
-	  mpn_sub_n (rp, rp, tp, bn); /* rp <- r - r (r^2 y - 1) / 2 */
+	  if (bn > pbn) {
+	    if (rp[pbn - 1] < tp[0])
+	      mpn_com (rp + pbn, tp + 1, bn - pbn);
+	    else
+	      mpn_neg (rp + pbn, tp + 1, bn - pbn);
+	  }
+	  rp[pbn - 1] -= tp[0];
+	  /* rp <- r - r (r^2 y - 1) / 2 */
 	}
     }
   return 1;
