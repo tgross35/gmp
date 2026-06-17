@@ -31,6 +31,7 @@ GNU Lesser General Public License along with the GNU MP Library.  If not,
 see https://www.gnu.org/licenses/.  */
 
 #include "gmp-impl.h"
+#include "longlong.h"
 
 /* Compute r such that r^2 * y = 1 (mod 2^{b+1}).
    Return non-zero if such an integer r exists.
@@ -94,9 +95,9 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
   else
     {
       mp_ptr tp2 = tp + 1 + bnb / GMP_NUMB_BITS;
-      mp_size_t bn = 1, order[GMP_LIMB_BITS + 1];
+      mp_size_t bn, order[GMP_LIMB_BITS + 1];
       mp_limb_t t0, r0, y0 = *yp;
-      int i, d;
+      int i;
 
       if ((y0 & 7) != 1)
 	return 0;
@@ -152,16 +153,34 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 #endif
 
-      d = 0;
+      i = 0;
       for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
-	order[d++] = bnb;
+	order[i++] = bnb;
       if (bnb > precomputed_bits) {
 	t0 = r0 * r0 * y0 >> 1;
 	r0 -= r0 * t0;
 	ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
       }
-      *rp = r0 & GMP_NUMB_MAX;
-      for (i = d - 1; i >= 0; i--)
+      if (i) {
+	mp_limb_t t5, t4, t3, t2, t1, r1;
+	--i;
+
+	umul_ppmm (t1, t0, r0, r0);
+	umul_ppmm (t3, t2, y0, t0);
+	t3 += y0 * t1 + yp[1] * t0;
+	t2 = ((t2 >> 1) | (t3 << (GMP_NUMB_BITS - 1))) & GMP_NUMB_MAX;
+	t3 = t3 >> 1; /* [t3,t2] <- (rp^2 y - 1) / 2 */
+
+	umul_ppmm (t5, t4, r0, t2);
+	t5 += r0 * t3;
+
+	sub_ddmmss(rp[1], rp[0], 0, r0, t5, t4);
+      } else {
+	*rp = r0 & GMP_NUMB_MAX;
+	return 1;
+      }
+
+      for (; --i >= 0;)
 	{
 	  bnb = order[i];
 	  bn = 1 + bnb / GMP_LIMB_BITS;
