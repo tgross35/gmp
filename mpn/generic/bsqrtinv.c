@@ -49,8 +49,37 @@ see https://www.gnu.org/licenses/.  */
 
      (3) Use wrap-around trick.
 
-     (4) Use a small table to get starting value.
+     (4) Use a small table to get starting value. [Done]
 */
+
+/* Generated with GP-Pari:
+   b=8;v=Vecsmall(-binary(2^2^b-1));
+   forstep(i=1,2^(b+1),2,v[lift(Mod(i,2^(b+3))^-2)>>3+1]=i\2);
+   for(i=1,2^b,print1(v[i],",");if(i%16==0,print(),print1(" ")))
+ */
+
+#ifndef BSQRTINV_DONT_USE_TABLE
+static const unsigned char binvsqrttab[256] = /* The least significant 1 was removed */
+  {
+    0, 170, 172, 102, 184, 253, 219, 129, 240, 218, 227, 22, 168, 50, 148, 46,
+    31, 245, 115, 57, 152, 157, 4, 222, 208, 197, 3, 137, 136, 146, 139, 113,
+    63, 149, 108, 217, 120, 61, 228, 62, 176, 101, 220, 214, 104, 242, 84, 238,
+    95, 53, 179, 134, 88, 34, 59, 97, 144, 5, 67, 54, 72, 173, 203, 78,
+    127, 42, 44, 25, 56, 130, 164, 254, 112, 90, 156, 105, 40, 77, 20, 81,
+    159, 138, 243, 185, 24, 226, 123, 94, 80, 186, 131, 246, 8, 18, 244, 241,
+    191, 234, 19, 166, 7, 189, 100, 65, 48, 229, 92, 86, 23, 114, 43, 110,
+    223, 181, 204, 6, 39, 93, 187, 225, 16, 133, 195, 73, 55, 210, 180, 49,
+    255, 85, 83, 153, 71, 2, 36, 126, 15, 37, 28, 233, 87, 205, 107, 209,
+    224, 10, 140, 198, 103, 98, 251, 33, 47, 58, 252, 118, 119, 109, 116, 142,
+    192, 106, 147, 38, 135, 194, 27, 193, 79, 154, 35, 41, 151, 13, 171, 17,
+    160, 202, 76, 121, 167, 221, 196, 158, 111, 250, 188, 201, 183, 82, 52, 177,
+    128, 213, 211, 230, 199, 125, 91, 1, 143, 165, 99, 150, 215, 178, 235, 174,
+    96, 117, 12, 70, 231, 29, 132, 161, 175, 69, 124, 9, 247, 237, 11, 14,
+    64, 21, 236, 89, 248, 66, 155, 190, 207, 26, 163, 169, 232, 141, 212, 145,
+    32, 74, 51, 249, 216, 162, 68, 30, 239, 122, 60, 182, 200, 45, 75, 206,
+  };
+#endif
+
 int
 mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 {
@@ -72,6 +101,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
       if ((y0 & 7) != 1)
 	return 0;
 
+#ifdef BSQRTINV_DONT_USE_TABLE
       r0 = 33 + ((y0 & 8) * 5 >> 2) - ((y0 & 16) >> 1);
 
       t0 = r0 * r0 * y0 >> 1;
@@ -99,6 +129,27 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 #else /* GMP_NUMB_BITS < 7 * 2 - 1 */
       const mp_bitcnt_t precomputed_bits = 7;
+#endif
+#else
+      r0 = binvsqrttab[(y0 >> 3) & 0xff];
+      r0 = (r0 << 1) + 1;
+
+#if GMP_NUMB_BITS >= 10 * 2 - 1
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 10))) == 0);
+#if GMP_NUMB_BITS >= 19 * 2 - 1
+      t0 = r0 * r0 * y0 >> 1;
+      r0 -= r0 * t0;
+      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 19))) == 0);
+
+      const mp_bitcnt_t precomputed_bits = 19 * 2 - 1;
+#else /* GMP_NUMB_BITS < 19 * 2 - 1 */
+      const mp_bitcnt_t precomputed_bits = 19;
+#endif
+#else /* GMP_NUMB_BITS < 10 * 2 - 1 */
+      const mp_bitcnt_t precomputed_bits = 10;
+#endif
 #endif
 
       d = 0;
