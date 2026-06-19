@@ -1,3 +1,14 @@
+2026-06-19  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* mpn/generic/perfpow.c (is_kth_power): Check only one possible
+	square root.
+
+	* tune/speed.c: Recognise mpn_bsqrtinv.
+	* tune/speed.h: Declare speed_mpn_bsqrtinv and the macro.
+	* tune/common.c (speed_mpn_bsqrtinv): Implement the function.
+
+	* mpn/generic/bsqrtinv.c: Rewrite with a differen iteration.
+
 2026-04-04  Marc Glisse <marc.glisse@inria.fr>
 
 	* gmpxx.h (operator""): Remove deprecated space.
