@@ -38,7 +38,7 @@ see https://www.gnu.org/licenses/.  */
    Return non-zero if such an integer r exists.
 
    Iterates
-     r' <-- r - r (r^2 y - 1) / 2
+     r' <-- r - r (r^2 y - 1) / 2 , (or its negation, sometimes)
    using Hensel lifting.  Since we divide by two, the Hensel lifting is
    somewhat degenerates.  Therefore, we lift from 2^b to 2^{b+1}-1.
 
@@ -157,7 +157,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
       }
       if (i) {
-	mp_limb_t t5, t4, t3, t2, t1, r1;
+	mp_limb_t t4, t3, t2, t1, r1;
 	--i;
 
 	umul_ppmm (t1, t0, r0, r0);
@@ -166,10 +166,12 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	t2 = ((t2 >> 1) | (t3 << (GMP_NUMB_BITS - 1))) & GMP_NUMB_MAX;
 	t3 = t3 >> 1; /* [t3,t2] <- (rp^2 y - 1) / 2 */
 
-	umul_ppmm (t5, t4, r0, t2);
-	t5 += r0 * t3;
+	/* [r1,t4] <- r (r^2 y - 1) / 2 */
+	umul_ppmm (r1, t4, r0, t2);
+	r1 += r0 * t3;
 
-	sub_ddmmss(rp[1], rp[0], 0, r0, t5, t4);
+	/* r (r^2 y - 1) / 2 - r */
+	sub_ddmmss(rp[1], rp[0], r1, t4, 0, r0);
       } else {
 	*rp = r0 & GMP_NUMB_MAX;
 	return 1;
