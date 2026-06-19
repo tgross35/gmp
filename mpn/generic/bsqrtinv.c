@@ -80,7 +80,6 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 {
   ASSERT (bnb > 0);
 
-  ASSERT (mpn_zero_p (rp, 1 + bnb / GMP_NUMB_BITS));
   if (bnb == 1)
     {
       if ((yp[0] & 3) != 1)
@@ -148,12 +147,22 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 
       i = 0;
-      for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
+      for (; bnb > GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
 	order[i++] = bnb;
       if (bnb > precomputed_bits) {
-	t0 = r0 * r0 * y0 >> 1;
-	r0 -= r0 * t0;
-	ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
+	if (bnb == GMP_NUMB_BITS) {
+	  mp_limb_t r0h = r0 >> 1;
+	  mp_limb_t r0sqm1 = r0h * (r0h + 1);
+	  mp_limb_t yh = (y0 >> 2) + (yp[1] << (GMP_NUMB_BITS - 2));
+	  mp_limb_t yrrm1d4 = y0 * r0sqm1 + yh;
+	  ASSERT ((yrrm1d4 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits + 1))) == 0);
+	  mp_limb_t rt = r0 * yrrm1d4 - r0h - 1;
+	  r0 = (rt << 1) ^ ((rt & GMP_LIMB_HIGHBIT) ? GMP_NUMB_MAX : CNST_LIMB(1));
+	} else {
+	  t0 = r0 * r0 * y0 >> 1;
+	  r0 -= r0 * t0;
+	  ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
+	}
       }
       if (i) {
 	mp_limb_t t4, t3, t2, t1, r1;
@@ -191,15 +200,14 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  mpn_rshift (tp2 + pbn - 1, tp2 + pbn - 1, bn - pbn + 1, 1);
 
 	  /* tp <- r (r^2 y - 1) / 2 (only the relevant limbs) */
-	  ASSERT (pbn >= bn - pbn + 1 || (pbn == bn - pbn && rp [pbn] == 0));
+	  rp [pbn] = 0;
 	  mpn_mullo_n (tp, rp, tp2 + pbn - 1, bn - pbn + 1);
 
-	  if (bn > pbn) {
-	    if (rp[pbn - 1] < tp[0])
-	      mpn_com (rp + pbn, tp + 1, bn - pbn);
-	    else
-	      mpn_neg (rp + pbn, tp + 1, bn - pbn);
-	  }
+	  if (rp[pbn - 1] < tp[0])
+	    mpn_com (rp + pbn, tp + 1, bn - pbn);
+	  else
+	    mpn_neg (rp + pbn, tp + 1, bn - pbn);
+
 	  rp[pbn - 1] -= tp[0];
 	  /* rp <- r - r (r^2 y - 1) / 2 */
 	}
