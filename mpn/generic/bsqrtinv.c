@@ -80,7 +80,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 {
   ASSERT (bnb > 0);
 
-  rp[0] = 1;
+  ASSERT (mpn_zero_p (rp, 1 + bnb / GMP_NUMB_BITS));
   if (bnb == 1)
     {
       if ((yp[0] & 3) != 1)
@@ -147,7 +147,6 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 #endif
 
-      mpn_zero (rp + 1, bnb / GMP_NUMB_BITS);
       i = 0;
       for (; bnb >= GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
 	order[i++] = bnb;
@@ -186,13 +185,14 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  bn = 1 + bnb / GMP_LIMB_BITS;
 
 	  mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
-	  mpn_rshift (tp2+pbn-1, tp2+pbn-1, bn-pbn+1, 1); /* tp2 <- (rp^2 y - 1) / 2 */
+	  ASSERT (tp2[0] == CNST_LIMB (1));
+	  ASSERT (pbn == 2 || mpn_zero_p (tp2 + 1, pbn - 2));
+	  /* tp2 <- (rp^2 y - 1) / 2 (skip the lowest limbs) */
+	  mpn_rshift (tp2 + pbn - 1, tp2 + pbn - 1, bn - pbn + 1, 1);
 
-	  if (pbn <= bn - pbn)
-	    mpn_mul (tp, tp2 + pbn - 1, bn - pbn + 1, rp, pbn);
-	  else
-	    mpn_mul (tp, rp, pbn, tp2 + pbn - 1, bn - pbn + 1);
-	  /* tp <- r (r^2 y - 1) / 2 */
+	  /* tp <- r (r^2 y - 1) / 2 (only the relevant limbs) */
+	  ASSERT (pbn >= bn - pbn + 1 || (pbn == bn - pbn && rp [pbn] == 0));
+	  mpn_mullo_n (tp, rp, tp2 + pbn - 1, bn - pbn + 1);
 
 	  if (bn > pbn) {
 	    if (rp[pbn - 1] < tp[0])
