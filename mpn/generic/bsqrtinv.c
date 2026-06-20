@@ -147,10 +147,10 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #endif
 
       i = 0;
-      for (; bnb > GMP_NUMB_BITS; bnb = (bnb + 2) >> 1)
+      for (; bnb > GMP_NUMB_BITS + 1; bnb = (bnb + 2) >> 1)
 	order[i++] = bnb;
       if (bnb > precomputed_bits) {
-	if (bnb == GMP_NUMB_BITS) {
+	if (bnb >= GMP_NUMB_BITS) {
 	  mp_limb_t r0h = r0 >> 1;
 	  mp_limb_t r0sqm1 = r0h * (r0h + 1);
 	  mp_limb_t yh = (y0 >> 2) + (yp[1] << (GMP_NUMB_BITS - 2));
@@ -165,6 +165,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	}
       }
       if (i) {
+	if (order[i-1] < GMP_NUMB_BITS*2) {
 	mp_limb_t t4, t3, t2, t1, r1;
 	--i;
 
@@ -180,6 +181,9 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 
 	/* r (r^2 y - 1) / 2 - r */
 	sub_ddmmss(rp[1], rp[0], r1, t4, 0, r0);
+	} else {
+	  *rp = r0 & GMP_NUMB_MAX;
+	  }
       } else {
 	*rp = r0 & GMP_NUMB_MAX;
 	return 1;
