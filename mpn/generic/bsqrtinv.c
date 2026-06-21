@@ -173,18 +173,18 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	mp_limb_t t4, t3, t2, t1, r1;
 
 	umul_ppmm (t1, t0, r0, r0); /* [t1,t0] <- r^2 */
-	if (order[--i] < GMP_NUMB_BITS*2) {
-	umul_ppmm (t3, t2, y0, t0);
-	t3 += y0 * t1 + yp[1] * t0;
-	t2 = ((t2 >> 1) | (t3 << (GMP_NUMB_BITS - 1))) & GMP_NUMB_MAX;
-	t3 = t3 >> 1 ; /* [t3,t2] <- (r^2 y - 1) / 2 */
+	if (bnb <= GMP_NUMB_BITS) {
+	  umul_ppmm (t3, t2, y0, t0);
+	  t3 += y0 * t1 + yp[1] * t0;
+	  t2 = ((t2 >> 1) | (t3 << (GMP_NUMB_BITS - 1))) & GMP_NUMB_MAX;
+	  t3 = t3 >> 1 ; /* [t3,t2] <- (r^2 y - 1) / 2 */
 
-	/* [r1,t4] <- r (r^2 y - 1) / 2 */
-	umul_ppmm (r1, t4, r0, t2);
-	r1 += r0 * t3;
+	  /* [r1,t4] <- r (r^2 y - 1) / 2 */
+	  umul_ppmm (r1, t4, r0, t2);
+	  r1 += r0 * t3;
 
-	/* r (r^2 y - 1) / 2 - r */
-	sub_ddmmss(rp[1], rp[0], r1, t4, 0, r0);
+	  /* r (r^2 y - 1) / 2 - r */
+	  sub_ddmmss(rp[1], rp[0], r1, t4, 0, r0);
 	} else {
 	  t0 = (t0 >> 2) | (t1 << (GMP_NUMB_BITS -2));
 	  t1 = (t1 >> 2); /* [t1,t0] = r0*r0 >> 2 */
@@ -206,41 +206,41 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #ifdef BSQRTINV_RP_NOT_ZEROED
 	  rp[2] = 0;
 #endif
+	}
+	--i;
+
+	for (bn = 2 + (bnb > GMP_NUMB_BITS); --i >= 0;)
+	  {
+	    mp_size_t pbn = bn;
+	    mpn_sqr (tp, rp, bn); /* tp <- r^2 */
+
+	    bnb = order[i];
+	    bn = 1 + bnb / GMP_LIMB_BITS;
+
+	    mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
+	    ASSERT (tp2[0] == CNST_LIMB (1));
+	    ASSERT (pbn == 2 || mpn_zero_p (tp2 + 1, pbn - 2));
+	    /* tp2 <- (rp^2 y - 1) / 2 (skip the lowest limbs) */
+	    ASSERT_NOCARRY (mpn_rshift (tp2 + pbn - 1, tp2 + pbn - 1, bn - pbn + 1, 1));
+
+	    /* tp <- r (r^2 y - 1) / 2 (only the relevant limbs) */
+#ifdef BSQRTINV_RP_NOT_ZEROED
+	    rp [pbn] = 0;
+#endif
+	    ASSERT (pbn >= bn - pbn + 1 || (pbn == bn - pbn && rp [pbn] == 0));
+	    mpn_mullo_n (tp, rp, tp2 + pbn - 1, bn - pbn + 1);
+
+	    if (rp[pbn - 1] < tp[0])
+	      mpn_com (rp + pbn, tp + 1, bn - pbn);
+	    else
+	      mpn_neg (rp + pbn, tp + 1, bn - pbn);
+
+	    rp[pbn - 1] -= tp[0];
+	    /* rp <- r - r (r^2 y - 1) / 2 */
 	  }
       } else {
 	*rp = r0 & GMP_NUMB_MAX;
-	return 1;
       }
-
-      for (bn = 2 + (bnb > GMP_NUMB_BITS); --i >= 0;)
-	{
-	  mp_size_t pbn = bn;
-	  mpn_sqr (tp, rp, bn); /* tp <- r^2 */
-
-	  bnb = order[i];
-	  bn = 1 + bnb / GMP_LIMB_BITS;
-
-	  mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
-	  ASSERT (tp2[0] == CNST_LIMB (1));
-	  ASSERT (pbn == 2 || mpn_zero_p (tp2 + 1, pbn - 2));
-	  /* tp2 <- (rp^2 y - 1) / 2 (skip the lowest limbs) */
-	  ASSERT_NOCARRY (mpn_rshift (tp2 + pbn - 1, tp2 + pbn - 1, bn - pbn + 1, 1));
-
-	  /* tp <- r (r^2 y - 1) / 2 (only the relevant limbs) */
-#ifdef BSQRTINV_RP_NOT_ZEROED
-	  rp [pbn] = 0;
-#endif
-	  ASSERT (pbn >= bn - pbn + 1 || (pbn == bn - pbn && rp [pbn] == 0));
-	  mpn_mullo_n (tp, rp, tp2 + pbn - 1, bn - pbn + 1);
-
-	  if (rp[pbn - 1] < tp[0])
-	    mpn_com (rp + pbn, tp + 1, bn - pbn);
-	  else
-	    mpn_neg (rp + pbn, tp + 1, bn - pbn);
-
-	  rp[pbn - 1] -= tp[0];
-	  /* rp <- r - r (r^2 y - 1) / 2 */
-	}
     }
   return 1;
 }
