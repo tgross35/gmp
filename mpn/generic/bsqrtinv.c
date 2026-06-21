@@ -168,16 +168,16 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
 	}
       }
-      if (i) {
-	if (order[i-1] < GMP_NUMB_BITS*2) {
-	mp_limb_t t4, t3, t2, t1, r1;
-	--i;
 
-	umul_ppmm (t1, t0, r0, r0);
+      if (i) {
+	mp_limb_t t4, t3, t2, t1, r1;
+
+	umul_ppmm (t1, t0, r0, r0); /* [t1,t0] <- r^2 */
+	if (order[--i] < GMP_NUMB_BITS*2) {
 	umul_ppmm (t3, t2, y0, t0);
 	t3 += y0 * t1 + yp[1] * t0;
 	t2 = ((t2 >> 1) | (t3 << (GMP_NUMB_BITS - 1))) & GMP_NUMB_MAX;
-	t3 = t3 >> 1; /* [t3,t2] <- (rp^2 y - 1) / 2 */
+	t3 = t3 >> 1 ; /* [t3,t2] <- (r^2 y - 1) / 2 */
 
 	/* [r1,t4] <- r (r^2 y - 1) / 2 */
 	umul_ppmm (r1, t4, r0, t2);
@@ -186,9 +186,25 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	/* r (r^2 y - 1) / 2 - r */
 	sub_ddmmss(rp[1], rp[0], r1, t4, 0, r0);
 	} else {
-	  *rp = r0 & GMP_NUMB_MAX;
+	  t0 = (t0 >> 2) | (t1 << (GMP_NUMB_BITS -2));
+	  t1 = (t1 >> 2); /* [t1,t0] = r0*r0 >> 2 */
+	  umul_ppmm (t3, t2, y0, t0);
+	  t3 += y0 * t1 + yp[1] * t0;
+	  t3 += (yp[1] >> 2) + (yp[2] << (GMP_NUMB_BITS - 2)) + (t2 != 0);
+	  ASSERT (t2 + (y0 >> 2) + (yp[1] << (GMP_NUMB_BITS - 2)) == 0);
+	  /* [t3,0] <- (r0^2 y - 1) / 2 / 2 */
+
+	  t4 = t3 * r0 - 1;
+	  /* [2*t4+1,-r0] <- r0*(r0^2 y-1)/2 - r0 */
+	  if (t4 & GMP_LIMB_HIGHBIT) {
+	    *rp = r0 & GMP_NUMB_MAX;
+	    rp[1] = ~t4 << 1;
+	  } else {
+	    *rp = -r0 & GMP_NUMB_MAX;
+	    rp[1] = (t4 << 1) ^ 1;
+	  }
 #ifdef BSQRTINV_RP_NOT_ZEROED
-	  rp[1] = 0;
+	  rp[2] = 0;
 #endif
 	  }
       } else {
@@ -196,7 +212,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	return 1;
       }
 
-      for (bn = 2; --i >= 0;)
+      for (bn = 2 + (bnb > GMP_NUMB_BITS); --i >= 0;)
 	{
 	  mp_size_t pbn = bn;
 	  mpn_sqr (tp, rp, bn); /* tp <- r^2 */
