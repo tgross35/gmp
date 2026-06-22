@@ -318,6 +318,7 @@ double speed_mpn_mu_bdiv_qr (struct speed_params *);
 double speed_mpn_broot (struct speed_params *);
 double speed_mpn_broot_invm1 (struct speed_params *);
 double speed_mpn_bsqrtinv (struct speed_params *);
+double speed_mpn_bsqrt (struct speed_params *);
 double speed_mpn_brootinv (struct speed_params *);
 double speed_mpn_invert (struct speed_params *);
 double speed_mpn_invertappr (struct speed_params *);
@@ -2280,7 +2281,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     speed_starttime ();							\
     i = s->reps;							\
     do									\
-      mpn_bsqrtinv (rp, yp, bnb, tp);					\
+      function (rp, yp, bnb, tp);					\
     while (--i != 0);							\
     t = speed_endtime ();						\
 									\

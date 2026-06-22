@@ -942,7 +942,12 @@ speed_mpn_broot_invm1 (struct speed_params *s)
 double
 speed_mpn_bsqrtinv (struct speed_params *s)
 {
-  SPEED_ROUTINE_MPN_BSQRTINV (mpn_bsqrtinv, 2*s->size);
+  SPEED_ROUTINE_MPN_BSQRTINV (mpn_bsqrtinv, s->size + 2);
+}
+double
+speed_mpn_bsqrt (struct speed_params *s)
+{
+  SPEED_ROUTINE_MPN_BSQRTINV (mpn_bsqrt, 2*s->size + 3);
 }
 double
 speed_mpn_brootinv (struct speed_params *s)
