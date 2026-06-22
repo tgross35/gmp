@@ -3,11 +3,15 @@
 	* mpn/generic/perfpow.c (is_kth_power): Check only one possible
 	square root.
 
-	* tune/speed.c: Recognise mpn_bsqrtinv.
-	* tune/speed.h: Declare speed_mpn_bsqrtinv and the macro.
-	* tune/common.c (speed_mpn_bsqrtinv): Implement the function.
+	* tune/speed.c: Recognise mpn_bsqrtinv, mpn_bsqrt.
+	* tune/speed.h: Declare speed_mpn_bsqrt{inv,} and the macro.
+	* tune/common.c (speed_mpn_bsqrt{inv,}): Implement the functions.
 
 	* mpn/generic/bsqrtinv.c: Rewrite with a differen iteration.
+	* mpn/generic/bsqrt.c: Return 0 on failure.
+
+	* tests/mpn/t-bsqrt.c: New File, test the mpn_bsqrt function.
+	* tests/mpn/Makefile.am (check_PROGRAMS): Add t-bsqrt.
 
 2026-04-04  Marc Glisse <marc.glisse@inria.fr>
 
