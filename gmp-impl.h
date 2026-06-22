@@ -1800,7 +1800,7 @@ __GMP_DECLSPEC void mpn_broot_invm1 (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t);
 __GMP_DECLSPEC void mpn_brootinv (mp_ptr, mp_srcptr, mp_size_t, mp_limb_t, mp_ptr);
 
 #define mpn_bsqrt __MPN(bsqrt)
-__GMP_DECLSPEC void mpn_bsqrt (mp_ptr, mp_srcptr, mp_bitcnt_t, mp_ptr);
+__GMP_DECLSPEC int mpn_bsqrt (mp_ptr, mp_srcptr, mp_bitcnt_t, mp_ptr);
 
 #define mpn_bsqrtinv __MPN(bsqrtinv)
 __GMP_DECLSPEC int mpn_bsqrtinv (mp_ptr, mp_srcptr, mp_bitcnt_t, mp_ptr);

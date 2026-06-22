@@ -1,6 +1,6 @@
-/* mpn_bsqrt, a^{1/2} (mod 2^n).
+/* mpn_bsqrt, a^{1/2} (mod 2^n), for odd a.
 
-Copyright 2009, 2010, 2012, 2015 Free Software Foundation, Inc.
+Copyright 2009, 2010, 2012, 2015, 2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -30,8 +30,9 @@ see https://www.gnu.org/licenses/.  */
 
 #include "gmp-impl.h"
 
-
-void
+/* tp needs (1 + bnb / GMP_NUMB_BITS) limbs of space + the scratch
+   used by mpn_bsqrtinv, i.e 3*(1 + bnb / GMP_NUMB_BITS) */
+int
 mpn_bsqrt (mp_ptr rp, mp_srcptr ap, mp_bitcnt_t nb, mp_ptr tp)
 {
   mp_ptr sp;
@@ -39,9 +40,17 @@ mpn_bsqrt (mp_ptr rp, mp_srcptr ap, mp_bitcnt_t nb, mp_ptr tp)
 
   ASSERT (nb > 0);
 
-  n = nb / GMP_NUMB_BITS;
+  n = 1 + nb / GMP_NUMB_BITS;
   sp = tp + n;
 
-  mpn_bsqrtinv (tp, ap, nb, sp);
-  mpn_mullo_n (rp, tp, ap, n);
+  MPN_FILL (tp, n, CNST_LIMB(0));
+  if (! mpn_bsqrtinv (tp, ap, nb, sp))
+    return 0;
+
+  if (n == 1)
+    *rp = *tp * *ap;
+  else
+    mpn_mullo_n (rp, tp, ap, n);
+
+  return 1;
 }
