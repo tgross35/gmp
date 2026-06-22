@@ -75,31 +75,33 @@ static const unsigned char binvsqrttab[256] = /* The least significant 1 was rem
     32,  74,  51, 249, 216, 162,  68,  30, 239, 122,  60, 182, 200,  45,  75, 206};
 #endif
 
+/* tp needs 2*(1 + bnb / GMP_NUMB_BITS) limbs of space */
 int
 mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 {
+  mp_limb_t y0 = *yp;
   ASSERT (bnb > 0);
 
 #ifndef BSQRTINV_RP_NOT_ZEROED
   ASSERT (mpn_zero_p (rp, 1 + bnb / GMP_NUMB_BITS));
 #endif
-  if (bnb == 1)
+  if (UNLIKELY (bnb == 1))
     {
-      if ((yp[0] & 3) != 1)
-	return 0;
+      *rp = y0;
+      return (y0 & 3) == 1;
     }
   else
     {
       mp_ptr tp2 = tp + 1 + bnb / GMP_NUMB_BITS;
       mp_size_t bn, order[GMP_LIMB_BITS + 1];
-      mp_limb_t t0, r0, y0 = *yp;
+      mp_limb_t t0, r0;
       int i;
 
       if ((y0 & 7) != 1)
 	return 0;
 
 #ifdef BSQRTINV_DONT_USE_TABLE
-      r0 = 33 + ((y0 & 8) * 5 >> 2) - ((y0 & 16) >> 1);
+      r0 = y0 + ((y0 & 8) >> 2) + ((y0 & 16) >> 1);
 
       t0 = r0 * r0 * y0 >> 1;
       r0 -= r0 * t0;
@@ -162,6 +164,9 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  ASSERT ((yrrm1d4 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits + 1))) == 0);
 	  mp_limb_t rt = r0 * yrrm1d4 - r0h - 1;  /* (r*(r0*r0*y0-1)/2 - r) >>1 */
 	  r0 = (rt << 1) ^ ((rt & GMP_LIMB_HIGHBIT) ? GMP_NUMB_MAX : CNST_LIMB(1));
+#ifdef BSQRTINV_RP_NOT_ZEROED
+	  rp[1] = 0;
+#endif
 	} else {
 	  t0 = r0 * r0 * y0 >> 1;
 	  r0 -= r0 * t0;
@@ -197,10 +202,10 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  t4 = t3 * r0 - 1;
 	  /* [2*t4+1,-r0] <- r0*(r0^2 y-1)/2 - r0 */
 	  if (t4 & GMP_LIMB_HIGHBIT) {
-	    *rp = r0 & GMP_NUMB_MAX;
+	    rp[0] = r0 & GMP_NUMB_MAX;
 	    rp[1] = ~t4 << 1;
 	  } else {
-	    *rp = -r0 & GMP_NUMB_MAX;
+	    rp[0] = -r0 & GMP_NUMB_MAX;
 	    rp[1] = (t4 << 1) ^ 1;
 	  }
 #ifdef BSQRTINV_RP_NOT_ZEROED
