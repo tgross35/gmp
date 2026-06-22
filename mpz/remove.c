@@ -87,10 +87,9 @@ mpz_remove (mpz_ptr dest, mpz_srcptr src, mpz_srcptr f)
 	  mpz_t fpow[GMP_LIMB_BITS];		/* Really MP_SIZE_T_BITS */
 	  int p;
 
-#if WANT_ORIGINAL_DEST
 	  mp_ptr dp;
 	  dp = PTR (dest);
-#endif
+
       /* We could perhaps compute mpz_scan1(src,0)/mpz_scan1(f,0).  It is an
 	 upper bound of the result we're seeking.  We could also shift down the
 	 operands so that they become odd, to make intermediate values
@@ -128,12 +127,10 @@ mpz_remove (mpz_ptr dest, mpz_srcptr src, mpz_srcptr f)
 	      mpz_clear (fpow[p]);
 	    }
 
-#if WANT_ORIGINAL_DEST
 	  if (PTR (x) == dp) {
 	    mpz_swap (dest, x);
 	    mpz_set (dest, x);
 	  }
-#endif
 	}
       else
 	mpz_set (dest, src);

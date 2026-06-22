@@ -32,7 +32,7 @@ main (int argc, char **argv)
 {
   unsigned long int exp;
   mpz_t t, dest, refdest, dividend, divisor;
-  mp_size_t dividend_size, divisor_size;
+  mp_size_t dividend_size, divisor_size, prev_alloc;
   int i;
   int reps = 1000;
   unsigned long int pwr, refpwr;
@@ -73,9 +73,10 @@ main (int argc, char **argv)
       mpz_mul (dividend, dividend, t);
 
       refpwr = mpz_refremove (refdest, dividend, divisor);
+      prev_alloc = ALLOC(dest);
       pwr = mpz_remove (dest, dividend, divisor);
 
-      if (refpwr != pwr || mpz_cmp (refdest, dest) != 0)
+      if (refpwr != pwr || mpz_cmp (refdest, dest) != 0 || ALLOC(dest) < prev_alloc)
 	{
 	  fprintf (stderr, "ERROR after %d tests\n", i);
 	  fprintf (stderr, "refpower = %lu\n", refpwr);
