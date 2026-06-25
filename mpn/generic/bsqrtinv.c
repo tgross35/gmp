@@ -38,9 +38,14 @@ see https://www.gnu.org/licenses/.  */
    Return non-zero if such an integer r exists.
 
    Iterates
-     r' <-- r - r (r^2 y - 1) / 2 , (or its negation, sometimes)
+     t  <-- (r^2 y - 1) / 2
+     r' <-- r - r t , (or its negation, sometimes)
    using Hensel lifting.  Since we divide by two, the Hensel lifting is
    somewhat degenerates.  Therefore, we lift from 2^b to 2^{b+1}-1.
+
+   Somewhere, the Halley recursion is used, lifting from n to 3n-1.
+     t  <-- (r^2 y - 1) / 2
+     r' <-- r - r t + r 3t^2 / 2
 
    FIXME:
      (1) Simplify to do precision book-keeping in limbs rather than bits.
@@ -100,54 +105,49 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
       if ((y0 & 7) != 1)
 	return 0;
 
+      /* Rekte : 4 */
+      /* 4 -4x-> 11 -4x-> 32 (ne 33, 8x) */
+      /* 4 -4x-> 11 -3x-> 21 -3x-> preter 33 (10x) [4,33]*/
+
+      /* 4 -4x-> 11 -4x-> 32 -3x-> 63 (ne 64, 11x) [3,4]*/
+      /* 4 -4x-> 11 -4x-> 32 -4x-> preter 65 (12x) */
+
+      /* 4 -3x-> 7 -3x-> 13 -3x-> 25 -4x-> preter 65 (13x) */
+      /* 4 -3x-> 7 -3x-> 13 -3x-> 25 -3x-> preter 33 (12x) */
+      /* 4 -3x-> 7 -3x-> 13 -4x-> preter 33 (10x) */
+
+      /* Tabulo: 10 */
+      /* 10 -4x-> 29 -4x-> preter 65, 8x [4,4]*/
+      /* 10 -3x-> 19 -3x-> preter 33, 6x [3,3]*/
+
 #ifdef BSQRTINV_DONT_USE_TABLE
       r0 = y0 + ((y0 & 8) >> 2) + ((y0 & 16) >> 1);
 
       t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
       ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 4))) == 0);
-#if GMP_NUMB_BITS >= 7 * 2 - 1
-      t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
-      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 7))) == 0);
-#if GMP_NUMB_BITS >= 13 * 2 - 1
-      t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
-      ASSERT ((t0 & GMP_NUMB_MAX >> (GMP_NUMB_BITS - 13)) == 0);
-#if GMP_NUMB_BITS >= 25 * 2 - 1
-      t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
-      ASSERT ((t0 & GMP_NUMB_MAX >> (GMP_NUMB_BITS - 25)) == 0);
-
-      const mp_bitcnt_t precomputed_bits = 49;
-#else /* GMP_NUMB_BITS < 25 * 2 - 1 */
-      const mp_bitcnt_t precomputed_bits = 25;
-#endif
-#else /* GMP_NUMB_BITS < 13 * 2 - 1 */
-      const mp_bitcnt_t precomputed_bits = 13;
-#endif
-#else /* GMP_NUMB_BITS < 7 * 2 - 1 */
-      const mp_bitcnt_t precomputed_bits = 7;
-#endif
-#else
+      r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley -> 11 */
+      /* Better sequences are possible from size 11, but this
+	 code is currently not used. */
+#else /* ! defined(BSQRTINV_DONT_USE_TABLE) */
       r0 = binvsqrttab[(y0 >> 3) & 0xff];
       r0 = (r0 << 1) + 1;
 
-#if GMP_NUMB_BITS >= 10 * 2 - 1
-      t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
-      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 10))) == 0);
-#if GMP_NUMB_BITS >= 19 * 2 - 1
-      t0 = r0 * r0 * y0 >> 1;
-      r0 -= r0 * t0;
-      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 19))) == 0);
-
-      const mp_bitcnt_t precomputed_bits = 19 * 2 - 1;
-#else /* GMP_NUMB_BITS < 19 * 2 - 1 */
-      const mp_bitcnt_t precomputed_bits = 19;
-#endif
-#else /* GMP_NUMB_BITS < 10 * 2 - 1 */
+#if GMP_NUMB_BITS < 10 * 2 - 2
       const mp_bitcnt_t precomputed_bits = 10;
+#else /* GMP_NUMB_BITS >= 10 * 2 - 2 */
+      t0 = r0 * r0 * y0 >> 1;
+      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 10))) == 0);
+#if GMP_NUMB_BITS < 19 * 2 - 2
+      r0 -= r0 * t0;
+      const mp_bitcnt_t precomputed_bits = 19;
+#else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
+      r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley -> 29*/
+#if GMP_NUMB_BITS < 29 * 3 - 2
+      const mp_bitcnt_t precomputed_bits = 29;
+#else /* GMP_NUMB_BITS >= 29 * 3 - 2 */
+#error Not implemented, yet.
+#endif
+#endif
 #endif
 #endif
 
@@ -162,14 +162,22 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  mp_limb_t yh = (y0 >> 2) + (yp[1] << (GMP_NUMB_BITS - 2));
 	  mp_limb_t yrrm1d4 = y0 * r0sqm1 + yh; /* (r0*r0*y0-1) >> 2 */
 	  ASSERT ((yrrm1d4 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits + 1))) == 0);
-	  mp_limb_t rt = r0 * yrrm1d4 - r0h - 1;  /* (r*(r0*r0*y0-1)/2 - r) >>1 */
+#if GMP_NUMB_BITS < 19 * 2 - 2
+	  mp_limb_t rt = r0h - r0 * yrrm1d4;  /* (r - r*(r0*r0*y0-1)/2) >>1 */
+#else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
+	  mp_limb_t rt = r0h + r0 * yrrm1d4 * (yrrm1d4 * 3 - 1); /* Halley, x3 - 1 */
+#endif
 	  r0 = (rt << 1) ^ ((rt & GMP_LIMB_HIGHBIT) ? GMP_NUMB_MAX : CNST_LIMB(1));
 #ifdef BSQRTINV_RP_NOT_ZEROED
 	  rp[1] = 0;
 #endif
 	} else {
 	  t0 = r0 * r0 * y0 >> 1;
+#if GMP_NUMB_BITS < 19 * 2 - 2
 	  r0 -= r0 * t0;
+#else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
+	  r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley, x3 - 1 */
+#endif
 	  ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
 	}
       }
@@ -235,12 +243,14 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	    ASSERT (pbn >= bn - pbn + 1 || (pbn == bn - pbn && rp [pbn] == 0));
 	    mpn_mullo_n (tp, rp, tp2 + pbn - 1, bn - pbn + 1);
 
-	    if (rp[pbn - 1] < tp[0])
+	    /* mpn_rsub_1 (rp + pbn - 1, tp, bn - pbn + 1, rp[pbn - 1]) */
+	    int borrow;
+	    SUBC_LIMB (borrow, rp[pbn - 1], rp[pbn - 1], tp[0]);
+
+	    if (borrow)
 	      mpn_com (rp + pbn, tp + 1, bn - pbn);
 	    else
 	      mpn_neg (rp + pbn, tp + 1, bn - pbn);
-
-	    rp[pbn - 1] -= tp[0];
 	    /* rp <- r - r (r^2 y - 1) / 2 */
 	  }
       } else {
