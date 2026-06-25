@@ -131,6 +131,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 #else /* ! defined(BSQRTINV_DONT_USE_TABLE) */
       r0 = binvsqrttab[(y0 >> 3) & 0xff];
       r0 = (r0 << 1) + 1;
+#endif
 
 #if GMP_NUMB_BITS < 10 * 2 - 2
       const mp_bitcnt_t precomputed_bits = 10;
@@ -146,7 +147,6 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
       const mp_bitcnt_t precomputed_bits = 29;
 #else /* GMP_NUMB_BITS >= 29 * 3 - 2 */
 #error Not implemented, yet.
-#endif
 #endif
 #endif
 #endif
