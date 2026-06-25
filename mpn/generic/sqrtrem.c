@@ -248,8 +248,7 @@ mpn_dc_sqrtrem (mp_ptr sp, mp_ptr np, mp_size_t n, mp_limb_t approx, mp_ptr scra
   TRACE(printf("tdiv_qr(,,,,%u,,%u) -> %u\n", (unsigned) n, (unsigned) h, (unsigned) (n - h + 1)));
   mpn_tdiv_qr (scratch, np + l, 0, np + l, n, sp + l, h);
   q += scratch[l];
-  c = scratch[0] & 1;
-  mpn_rshift (sp, scratch, l, 1);
+  c = mpn_rshift (sp, scratch, l, 1) != 0;
   sp[l - 1] |= (q << (GMP_NUMB_BITS - 1)) & GMP_NUMB_MASK;
   if (UNLIKELY ((sp[0] & approx) != 0)) /* (sp[0] & mask) > 1 */
     return 1; /* Remainder is non-zero */
