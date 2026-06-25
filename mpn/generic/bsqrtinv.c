@@ -121,17 +121,19 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
       /* 10 -3x-> 19 -3x-> preter 33, 6x [3,3]*/
 
 #ifdef BSQRTINV_DONT_USE_TABLE
-      r0 = y0 + ((y0 & 8) >> 2) + ((y0 & 16) >> 1);
+      /* 16-bits computations are enough */
+      unsigned ru = y0 + ((y0 & 8) >> 2) + ((y0 & 16) >> 1);
 
-      t0 = r0 * r0 * y0 >> 1;
-      ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 4))) == 0);
-      r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley -> 11 */
+      unsigned tu = ru * ru * (unsigned) y0 >> 1;
+      ASSERT ((tu & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - 4))) == 0);
+      ru += ru * tu * ((tu >> 1) + tu - 1); /* Halley -> 11 */
       /* Better sequences are possible from size 11, but this
 	 code is currently not used. */
 #else /* ! defined(BSQRTINV_DONT_USE_TABLE) */
-      r0 = binvsqrttab[(y0 >> 3) & 0xff];
-      r0 = (r0 << 1) + 1;
+      unsigned ru = binvsqrttab[(y0 >> 3) & 0xff];
+      ru = (ru << 1) + 1;
 #endif
+      r0 = ru;
 
 #if GMP_NUMB_BITS < 10 * 2 - 2
       const mp_bitcnt_t precomputed_bits = 10;
