@@ -225,15 +225,33 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	for (bn = 2 + (bnb > GMP_NUMB_BITS); --i >= 0;)
 	  {
 	    mp_size_t pbn = bn;
+	    /* sqr may partially overwrite tp2, but that part is unused here */
 	    mpn_sqr (tp, rp, bn); /* tp <- r^2 */
 
 	    bnb = order[i];
 	    bn = 1 + bnb / GMP_LIMB_BITS;
 
-	    mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
-	    ASSERT (tp2[0] == CNST_LIMB (1));
-	    ASSERT (pbn == 2 || mpn_zero_p (tp2 + 1, pbn - 2));
-	    /* tp2 <- (rp^2 y - 1) / 2 (skip the lowest limbs) */
+#ifdef  BSQRTINV_USE_MULMID
+	    if (pbn > 20) /* Should be tuned, if it makes sense */
+	      {
+		int offset = 2; /* The larger, the safer */
+		mpn_mullo_n (tp2 + pbn - offset, yp, tp + pbn - offset, bn - pbn + offset);
+		/* mulmid partially overwrites tp2, but that part is unused here */
+		mpn_mulmid (tp + pbn - offset, yp, bn, tp, pbn - offset);
+		ASSERT (tp [bn + 2] < GMP_NUMB_MAX); /* MPN_INCR will be stopped here */
+		MPN_INCR_U (tp + pbn, bn - pbn + 3, ! mpn_zero_p (tp + pbn - offset, offset) |
+			    ! mpn_zero_p (tp2 + pbn - offset, offset - 1));
+		mpn_add_nc (tp2 + pbn - 1, tp2 + pbn - 1, tp + pbn,
+			    bn - pbn + 1, (tp2[pbn - 1] ^ tp[pbn]) & 1);
+	      }
+	    else
+#endif
+	      {
+		mpn_mullo_n (tp2, yp, tp, bn); /* tp2 <- rp^2 y */
+		ASSERT (tp2[0] == CNST_LIMB (1));
+		ASSERT (pbn == 2 || mpn_zero_p (tp2 + 1, pbn - 2));
+		/* tp2 <- (rp^2 y - 1) / 2 (skip the lowest limbs) */
+	      }
 	    ASSERT_NOCARRY (mpn_rshift (tp2 + pbn - 1, tp2 + pbn - 1, bn - pbn + 1, 1));
 
 	    /* tp <- r (r^2 y - 1) / 2 (only the relevant limbs) */
