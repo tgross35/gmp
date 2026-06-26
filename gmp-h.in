@@ -864,6 +864,9 @@ __GMP_DECLSPEC void mpz_inits (mpz_ptr, ...) __GMP_NOTHROW;
 #define mpz_init_set __gmpz_init_set
 __GMP_DECLSPEC void mpz_init_set (mpz_ptr, mpz_srcptr);
 
+#define mpz_init_setbit __gmpz_init_setbit
+__GMP_DECLSPEC void mpz_init_setbit (mpz_ptr, mp_bitcnt_t);
+
 #define mpz_init_set_d __gmpz_init_set_d
 __GMP_DECLSPEC void mpz_init_set_d (mpz_ptr, double);
 
