@@ -123,10 +123,9 @@ randseed_mt (gmp_randstate_ptr rstate, mpz_srcptr seed)
 
   p = (gmp_rand_mt_struct *) RNG_STATE (rstate);
 
-  mpz_init2 (mod, 19938L);
   mpz_init2 (seed1, 19937L);
+  mpz_init_setbit (mod, 19937L);
 
-  mpz_setbit (mod, 19937L);
   mpz_sub_ui (mod, mod, 20027L);
   mpz_mod (seed1, seed, mod);	/* Reduce `seed' modulo `mod'.  */
   mpz_clear (mod);
