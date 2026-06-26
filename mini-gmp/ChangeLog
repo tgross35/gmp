@@ -1,3 +1,11 @@
+2026-06-26  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* mini-gmp.c (mpz_init_setbit): New function.
+	(mpz_rootrem): Use mpz_init_setbit.
+	* mini-gmp.h: Add declaration of mpz_init_setbit.
+
+	* mini-gmp.c: Use mpz_clear earlier if possible.
+
 2026-03-15  Marco Bodrato <bodrato@mail.dm.unipi.it>
 
 	* tests/hex-random.c (hex_random_clear): New function.

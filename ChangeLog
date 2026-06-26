@@ -1,3 +1,17 @@
+2026-06-26  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* mpz/isetbit.c: New file, implementing mpz_init_setbit.
+	* Makefile.am (MPZ_OBJECTS): Add it.
+	* mpz/Makefile.am (libmpz_la_SOURCES): Add it.
+	* gmp-h.in: Declare the new function mpz_init_setbit.
+	* doc/gmp.texi: Document it.
+	* rand/randmts.c: Use it.
+
+	* gen-fac.c: Use the new function defined also in mini-gmp.
+	* gen-bases.c: Likewise.
+	* gen-trialdivtab.c: Likewise.
+	* bootstrap.c: Likewise.
+
 2026-06-19  Marco Bodrato <marco.bodrato@protonmail.com>
 
 	* mpn/generic/perfpow.c (is_kth_power): Check only one possible
