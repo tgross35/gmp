@@ -3,7 +3,7 @@
    Contributed to the GNU project by Niels Möller
    Additional functionalities and improvements by Marco Bodrato.
 
-Copyright 1991-1997, 1999-2022 Free Software Foundation, Inc.
+Copyright 1991-1997, 1999-2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
