@@ -272,6 +272,7 @@ void mpz_set_d (mpz_t, double);
 void mpz_init_set_si (mpz_t, signed long int);
 void mpz_init_set_ui (mpz_t, unsigned long int);
 void mpz_init_set (mpz_t, const mpz_t);
+void mpz_init_setbit (mpz_t, mp_bitcnt_t);
 void mpz_init_set_d (mpz_t, double);
 
 size_t mpz_sizeinbase (const mpz_t, int);
