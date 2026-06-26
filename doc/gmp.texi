@@ -3233,6 +3233,10 @@ if an error occurs it returns @minus{}1.  @var{rop} is initialized even if
 an error occurs.  (I.e., you have to call @code{mpz_clear} for it.)
 @end deftypefun
 
+@deftypefun int mpz_init_setbit (mpz_t @var{rop}, mp_bitcnt_t @var{bit_index})
+Initialize @var{rop} with limb space and set the sinle bit @var{bit_index}.
+@end deftypefun
+
 
 @node Converting Integers, Integer Arithmetic, Simultaneous Integer Init & Assign, Integer Functions
 @comment  node-name,  next,  previous,  up
