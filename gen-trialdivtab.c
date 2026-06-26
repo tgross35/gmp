@@ -91,16 +91,14 @@ main (int argc, char *argv[])
   for (i = 0; i < 7; i++)
     mpz_init (pre[i]);
 
-  mpz_init (B);
-  mpz_setbit (B, limb_bits);
+  mpz_init_setbit (B, limb_bits);
   mpz_init_set (gmp_numb_max, B);
   mpz_sub_ui (gmp_numb_max, gmp_numb_max, 1);
 
   mpz_init (tmp);
   mpz_init (inv);
 
-  mpz_init (Bhalf);
-  mpz_setbit (Bhalf, limb_bits - 1);
+  mpz_init_setbit (Bhalf, limb_bits - 1);
 
   start_p = 3;
 

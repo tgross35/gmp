@@ -101,8 +101,7 @@ gen_consts (unsigned numb, unsigned limb)
   ofl = b - 1;
   printf
     ("#define ODD_FACTORIAL_TABLE_LIMIT (%lu)\n", ofl);
-  mpz_init (mask);
-  mpz_setbit (mask, numb);
+  mpz_init_setbit (mask, numb);
   mpz_sub_ui (mask, mask, 1);
   printf
     ("\n/* Previous table, continued, values modulo 2^GMP_NUMB_BITS */\n");
