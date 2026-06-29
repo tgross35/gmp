@@ -135,8 +135,8 @@ mpz_stronglucas (mpz_srcptr x, mpz_ptr V, mpz_ptr Qk)
     int jac;
 
     /* n is odd, to possibly be a square, n % 8 = 1 is needed. */
-    if (((*PTR (n) & 6) == 0) && UNLIKELY (mpz_perfect_square_p (n)))
-      return 0; /* A square is composite. */
+    if (((*PTR (n) & 6) == 0) && UNLIKELY (mpn_perfect_square_p (PTR (n), SIZ (n))))
+      return 0; /* A square is not prime. */
 
     /* Check Ds up to square root (in case, n is prime)
        or avoid overflows */
