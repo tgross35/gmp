@@ -91,7 +91,7 @@ mod_eq_m1 (mpz_srcptr x, mpz_srcptr m)
 /* Performs a Miller-Rabin test, on the number n, with base x.
  * The value q is the odd number such that (q<<k) + 1 = n.
  *
- * The variable y is overwritten, it's only role is to reuse the same
+ * The variable y is overwritten, its only role is to reuse the same
  * temp variable.
  */
 
@@ -123,24 +123,35 @@ mpz_millerrabin (mpz_srcptr n, int reps)
   TMP_MARK;
 
   ASSERT (SIZ (n) > 0);
-  MPZ_TMP_INIT (nm, SIZ (n) + 1);
-  mpz_tdiv_q_2exp (nm, n, 1);
 
   MPZ_TMP_INIT (x, SIZ (n) + 1);
   MPZ_TMP_INIT (y, 2 * SIZ (n)); /* mpz_powm_ui needs excessive memory!!! */
   MPZ_TMP_INIT (q, SIZ (n));
 
   /* Find q and k, where q is odd and n = 1 + 2**k * q.  */
-  k = mpn_scan1 (PTR (nm), 0);
-  mpz_tdiv_q_2exp (q, nm, k);
-  ++k;
+  k = mpn_scan1 (PTR (n), 1);
+  mpz_tdiv_q_2exp (q, n, k);
 
   /* BPSW test */
   mpz_set_ui (x, 2);
   is_prime = millerrabin (n, x, y, q, k) && mpz_stronglucas (n, x, y);
 
+  /* Consider numbers up to 41*2^46 that pass the BPSW test as primes.
+     This implementation was tested up to 289*10^13 > 2^51+2^49+2^46 */
+  /* 2^5 < 41 = 0b101001 < 2^6 */
+#define GMP_BPSW_LIMB_CONST CNST_LIMB(41)
+#define GMP_BPSW_BITS_CONST (LOG2C(41) - 1)
+#define GMP_BPSW_BITS_LIMIT (46 + GMP_BPSW_BITS_CONST)
+
+#define GMP_BPSW_LIMBS_LIMIT (GMP_BPSW_BITS_LIMIT / GMP_NUMB_BITS)
+#define GMP_BPSW_BITS_MOD (GMP_BPSW_BITS_LIMIT % GMP_NUMB_BITS)
+
   if (is_prime)
     {
+#if !GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS && GMP_BPSW_BITS_MOD == 0
+      MPZ_TMP_INIT (nm, SIZ (n) + 1);
+      mpz_tdiv_q_2exp (nm, n, 1);
+#endif
       if (
 #if GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS
 	  /* Consider numbers up to 2^64 that pass the BPSW test as primes. */
@@ -153,44 +164,36 @@ mpz_millerrabin (mpz_srcptr n, int reps)
 	  || SIZ (n) - 64 / GMP_NUMB_BITS == (PTR (n) [64 / GMP_NUMB_BITS] < CNST_LIMB(1) << 64 % GMP_NUMB_BITS)
 #endif
 #else
-	  /* Consider numbers up to 41*2^46 that pass the BPSW test as primes.
-	     This implementation was tested up to 289*10^13 > 2^51+2^49+2^46 */
-	  /* 2^5 < 41 = 0b101001 < 2^6 */
-#define GMP_BPSW_LIMB_CONST CNST_LIMB(41)
-#define GMP_BPSW_BITS_CONST (LOG2C(41) - 1)
-#define GMP_BPSW_BITS_LIMIT (46 + GMP_BPSW_BITS_CONST)
-
-#define GMP_BPSW_LIMBS_LIMIT (GMP_BPSW_BITS_LIMIT / GMP_NUMB_BITS)
-#define GMP_BPSW_BITS_MOD (GMP_BPSW_BITS_LIMIT % GMP_NUMB_BITS)
-
+	  /* Consider numbers that pass the BPSW test as primes, if
+	     they are in the range where this implementation of the
+	     test has been fully tested. */
 #if GMP_NUMB_BITS <=  GMP_BPSW_BITS_LIMIT
-	  SIZ (n) <= GMP_BPSW_LIMBS_LIMIT
-#else
-	  0
+	  SIZ (n) <= GMP_BPSW_LIMBS_LIMIT ||
 #endif
-#if GMP_BPSW_BITS_MOD >=  GMP_BPSW_BITS_CONST
-	  || SIZ (n) - GMP_BPSW_LIMBS_LIMIT == (PTR (n) [GMP_BPSW_LIMBS_LIMIT] < GMP_BPSW_LIMB_CONST << (GMP_BPSW_BITS_MOD - GMP_BPSW_BITS_CONST))
-#else
 #if GMP_BPSW_BITS_MOD != 0
-	  || SIZ (n) - GMP_BPSW_LIMBS_LIMIT == (PTR (n) [GMP_BPSW_LIMBS_LIMIT] < GMP_BPSW_LIMB_CONST >> (GMP_BPSW_BITS_CONST -  GMP_BPSW_BITS_MOD))
+	  SIZ (n) - GMP_BPSW_LIMBS_LIMIT == (PTR (n) [GMP_BPSW_LIMBS_LIMIT] < 
+#if GMP_BPSW_BITS_MOD >=  GMP_BPSW_BITS_CONST
+					     GMP_BPSW_LIMB_CONST << (GMP_BPSW_BITS_MOD - GMP_BPSW_BITS_CONST))
 #else
+					     GMP_BPSW_LIMB_CONST >> (GMP_BPSW_BITS_CONST -  GMP_BPSW_BITS_MOD))
+#endif
+#else /* GMP_BPSW_BITS_MOD == 0 */
+	  SIZ (nm) - GMP_BPSW_LIMBS_LIMIT + 1 == (PTR (nm) [GMP_BPSW_LIMBS_LIMIT - 1] < 
 #if GMP_NUMB_BITS > GMP_BPSW_BITS_CONST
-	  || SIZ (nm) - GMP_BPSW_LIMBS_LIMIT + 1 == (PTR (nm) [GMP_BPSW_LIMBS_LIMIT - 1] < GMP_BPSW_LIMB_CONST << (GMP_NUMB_BITS - 1 - GMP_BPSW_BITS_CONST))
+						  GMP_BPSW_LIMB_CONST << (GMP_NUMB_BITS - 1 - GMP_BPSW_BITS_CONST))
+#else
+						  GMP_BPSW_LIMB_CONST >> (1 + GMP_BPSW_BITS_CONST - GMP_NUMB_BITS))
 #endif
 #endif
-#endif
-
-#undef GMP_BPSW_BITS_LIMIT
-#undef GMP_BPSW_LIMB_CONST
-#undef GMP_BPSW_BITS_CONST
-#undef GMP_BPSW_LIMBS_LIMIT
-#undef GMP_BPSW_BITS_MOD
-
 #endif
 	  )
 	is_prime = 2;
       else
 	{
+#if GMP_BPSW_NOFALSEPOSITIVES_UPTO_64BITS || GMP_BPSW_BITS_MOD != 0
+	  MPZ_TMP_INIT (nm, SIZ (n) + 1);
+	  mpz_tdiv_q_2exp (nm, n, 1);
+#endif
 	  reps -= 24;
 	  if (reps > 0)
 	    {
@@ -217,3 +220,9 @@ mpz_millerrabin (mpz_srcptr n, int reps)
   TMP_FREE;
   return is_prime;
 }
+
+#undef GMP_BPSW_BITS_LIMIT
+#undef GMP_BPSW_LIMB_CONST
+#undef GMP_BPSW_BITS_CONST
+#undef GMP_BPSW_LIMBS_LIMIT
+#undef GMP_BPSW_BITS_MOD
