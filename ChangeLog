@@ -12,6 +12,11 @@
 	* gen-trialdivtab.c: Likewise.
 	* bootstrap.c: Likewise.
 
+	* mpz/stronglucas.c: Use mpn_perfect_square_p instead of mpz_.
+	* mpz/millerrabin.c: Compute nm only when needed.
+	* mpn/generic/bsqrtinv.c: Higher order iteration step on half-limb.
+	* primesieve.c: Move a branch outside the loop.
+
 2026-06-19  Marco Bodrato <marco.bodrato@protonmail.com>
 
 	* mpn/generic/perfpow.c (is_kth_power): Check only one possible
