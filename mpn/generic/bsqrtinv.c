@@ -144,10 +144,11 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
       r0 -= r0 * t0;
       const mp_bitcnt_t precomputed_bits = 19;
 #else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
-      r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley -> 29*/
-#if GMP_NUMB_BITS < 29 * 3 - 2
-      const mp_bitcnt_t precomputed_bits = 29;
-#else /* GMP_NUMB_BITS >= 29 * 3 - 2 */
+      mp_limb_t t2 = t0 * t0;
+      r0 += r0 * t0 * ((t0 >> 1) + t0 - 1 - (t2 >> 1) - (t2 << 1)); /* Halley -> 37*/
+#if GMP_NUMB_BITS < 37 * 2 - 2
+      const mp_bitcnt_t precomputed_bits = 37;
+#else /* GMP_NUMB_BITS >= 37 * 2 - 2 */
 #error Not implemented, yet.
 #endif
 #endif
@@ -164,22 +165,16 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
 	  mp_limb_t yh = (y0 >> 2) + (yp[1] << (GMP_NUMB_BITS - 2));
 	  mp_limb_t yrrm1d4 = y0 * r0sqm1 + yh; /* (r0*r0*y0-1) >> 2 */
 	  ASSERT ((yrrm1d4 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits + 1))) == 0);
-#if GMP_NUMB_BITS < 19 * 2 - 2
 	  mp_limb_t rt = r0h - r0 * yrrm1d4;  /* (r - r*(r0*r0*y0-1)/2) >>1 */
-#else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
-	  mp_limb_t rt = r0h + r0 * yrrm1d4 * (yrrm1d4 * 3 - 1); /* Halley, x3 - 1 */
-#endif
+	  /* mp_limb_t rt = r0h + r0 * yrrm1d4 * (yrrm1d4 * 3 - 1); /\* Halley, x3 - 1 *\/ */
 	  r0 = (rt << 1) ^ ((rt & GMP_LIMB_HIGHBIT) ? GMP_NUMB_MAX : CNST_LIMB(1));
 #ifdef BSQRTINV_RP_NOT_ZEROED
 	  rp[1] = 0;
 #endif
 	} else {
 	  t0 = r0 * r0 * y0 >> 1;
-#if GMP_NUMB_BITS < 19 * 2 - 2
 	  r0 -= r0 * t0;
-#else /* GMP_NUMB_BITS >= 19 * 2 - 2 */
-	  r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /* Halley, x3 - 1 */
-#endif
+	  /* r0 += r0 * t0 * ((t0 >> 1) + t0 - 1); /\* Halley, x3 - 1 *\/ */
 	  ASSERT ((t0 & (GMP_NUMB_MAX >> (GMP_NUMB_BITS - precomputed_bits))) == 0);
 	}
       }
