@@ -154,18 +154,17 @@ fill_bitpattern (mp_ptr bit_array, mp_size_t limbs, mp_limb_t offset)
     offset %= 13 * 7 * 2;
     SET_OFF2 (m21, m22, m23, SIEVE_2MSK1, SIEVE_2MSK2, SIEVE_2MSKT, offset, 13 * 7 * 2);
   }
-  /* THINK: Consider handling odd values of 'limbs' outside the loop,
-     to have a single exit condition. */
-  do {
+  for (; (limbs -= 2) >= 0; )
+    {
+      bit_array[0] = m11 | m21;
+      ROTATE1 (m11, m12, 11 * 5 * 2);
+      bit_array[1] = m11 | m22;
+      bit_array += 2;
+      ROTATE1 (m11, m12, 11 * 5 * 2);
+      ROTATE2 (m21, m22, m23, 13 * 7 * 2);
+    }
+  if (limbs == -1) /* limbs+2 != 0, limbs&1 != 0 */
     bit_array[0] = m11 | m21;
-    if (--limbs == 0)
-      break;
-    ROTATE1 (m11, m12, 11 * 5 * 2);
-    bit_array[1] = m11 | m22;
-    bit_array += 2;
-    ROTATE1 (m11, m12, 11 * 5 * 2);
-    ROTATE2 (m21, m22, m23, 13 * 7 * 2);
-  } while (--limbs != 0);
   return n_cto_bit (13 + 1);
 #else
 #ifdef SIEVE_MASK2
@@ -175,16 +174,15 @@ fill_bitpattern (mp_ptr bit_array, mp_size_t limbs, mp_limb_t offset)
     offset %= 7 * 5 * 2;
     SET_OFF2 (mask, mask2, tail, SIEVE_MASK1, SIEVE_MASK2, SIEVE_MASKT, offset, 7 * 5 * 2);
   }
-  /* THINK: Consider handling odd values of 'limbs' outside the loop,
-     to have a single exit condition. */
-  do {
+  for (; (limbs -= 2) >= 0; )
+    {
+      bit_array[0] = mask;
+      bit_array[1] = mask2;
+      bit_array += 2;
+      ROTATE2 (mask, mask2, tail, 7 * 5 * 2);
+    }
+  if (limbs == -1)
     bit_array[0] = mask;
-    if (--limbs == 0)
-      break;
-    bit_array[1] = mask2;
-    bit_array += 2;
-    ROTATE2 (mask, mask2, tail, 7 * 5 * 2);
-  } while (--limbs != 0);
   return n_cto_bit (7 + 1);
 #else
   MPN_FILL (bit_array, limbs, CNST_LIMB(0));
