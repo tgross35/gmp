@@ -153,6 +153,9 @@ double speed_binvert_limb_mul1 (struct speed_params *);
 double speed_binvert_limb_loop (struct speed_params *);
 double speed_binvert_limb_cond (struct speed_params *);
 double speed_binvert_limb_arith (struct speed_params *);
+double speed_binvert_limb_sec (struct speed_params *);
+double speed_binvert_limb_pipe (struct speed_params *);
+double speed_binvert_limb_uintfast (struct speed_params *);
 
 double speed_mpf_init_clear (struct speed_params *);
 

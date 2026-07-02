@@ -530,6 +530,9 @@ const struct routine_t {
   { "binvert_limb_loop",  speed_binvert_limb_loop,  FLAG_NODATA },
   { "binvert_limb_cond",  speed_binvert_limb_cond,  FLAG_NODATA },
   { "binvert_limb_arith", speed_binvert_limb_arith, FLAG_NODATA },
+  { "binvert_limb_sec",   speed_binvert_limb_sec,   FLAG_NODATA },
+  { "binvert_limb_pipe",  speed_binvert_limb_pipe,  FLAG_NODATA },
+  { "binvert_limb_uintfast", speed_binvert_limb_uintfast, FLAG_NODATA },
 
   { "malloc_free",                  speed_malloc_free                  },
   { "malloc_realloc_free",          speed_malloc_realloc_free          },
