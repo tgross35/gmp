@@ -211,7 +211,7 @@ sec_binvert_limb (mp_limb_t n)
   mp_limb_t inv, t;
   ASSERT ((n & 1) == 1);
   /* 3 + 2 -> 5 */
-  inv = n + (((n + 1) << 1) & 0x18);
+  inv = 3 * n ^ 2;
 
   t = n * inv;
 #if GMP_NUMB_BITS <= 10
