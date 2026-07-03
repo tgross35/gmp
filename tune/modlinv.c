@@ -141,7 +141,7 @@ binvert_limb_pipe_f (mp_limb_t n)
       } while (__invbits < GMP_NUMB_BITS);
     }
 
-  ASSERT ((__inv * __n & GMP_NUMB_MASK) == 1);
+  ASSERT ((__inv * n & GMP_NUMB_MASK) == 1);
   return __inv & GMP_NUMB_MASK;
 }
 #define binvert_limb_pipe(inv,n) inv = binvert_limb_pipe_f (n)
