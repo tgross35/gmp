@@ -237,7 +237,7 @@ mpn_dc_sqrtrem (mp_ptr sp, mp_ptr np, mp_size_t n, mp_limb_t approx, mp_ptr scra
   ASSERT (n > 1);
   ASSERT (np[2 * n - 1] >= GMP_NUMB_HIGHBIT / 2);
 
-  l = n / 2;
+  l = n >> 1;
   h = n - l;
   if (h == 1)
     q = CALL_SQRTREM2_INPLACE (sp + l, np + 2 * l);
@@ -325,7 +325,7 @@ mpn_dc_sqrt (mp_ptr sp, mp_srcptr np, mp_size_t n, unsigned nsh, unsigned odd)
   ASSERT (n > 4);
   ASSERT (nsh < GMP_NUMB_BITS / 2);
 
-  l = (n - 1) / 2;
+  l = (n - 1) >> 1;
   h = n - l;
   ASSERT (n >= l + 2 && l + 2 >= h && h > l && l >= 1 + odd);
   scratch = TMP_ALLOC_LIMBS (l + 2 * n + 5 - USE_DIVAPPR_Q); /* n + 2-USE_DIVAPPR_Q */
@@ -430,7 +430,7 @@ mp_size_t
 mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
 {
   mp_limb_t cc, high, rl;
-  int c;
+  unsigned c;
   mp_size_t rn, tn;
   TMP_DECL;
 
@@ -494,7 +494,7 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
 	return rl != 0;
       }
   }
-  tn = (nn + 1) / 2; /* 2*tn is the smallest even integer >= nn */
+  tn = (nn + 1) >> 1; /* 2*tn is the smallest even integer >= nn */
 
   if ((rp == NULL) && (nn > 8))
     return mpn_dc_sqrt (sp, np, tn, c, nn & 1);
@@ -503,7 +503,7 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
     {
       mp_limb_t s0[1], mask;
       mp_ptr tp, scratch;
-      TMP_ALLOC_LIMBS_2 (tp, 2 * tn, scratch, tn / 2 + 1);
+      TMP_ALLOC_LIMBS_2 (tp, 2 * tn, scratch, (tn >> 1) + 1);
       tp[0] = 0;	     /* needed only when 2*tn > nn, but saves a test */
       if (c != 0)
 	mpn_lshift (tp + (nn & 1), np, nn, 2 * c);
@@ -544,7 +544,7 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
 	    rp = TMP_SALLOC_LIMBS (nn);
 	  MPN_COPY (rp, np, nn);
 	}
-      rn = tn + (rp[tn] = mpn_dc_sqrtrem (sp, rp, tn, 0, TMP_ALLOC_LIMBS(tn / 2 + 1)));
+      rn = tn + (rp[tn] = mpn_dc_sqrtrem (sp, rp, tn, 0, TMP_ALLOC_LIMBS((tn >> 1) + 1)));
     }
 
   MPN_NORMALIZE (rp, rn);
