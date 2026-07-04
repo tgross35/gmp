@@ -3688,7 +3688,7 @@ int speed_routine_count_zeros_setup (struct speed_params *, mp_ptr, int, int);
     return t;								\
   }
 
-/* Calculate worst case (larger prime) for perfect_square */
+/* Calculate worst case (square number) for perfect_square */
 #define SPEED_ROUTINE_MPN_PERFECT_SQUARE(function)			\
   {									\
     mpz_t     r;							\
