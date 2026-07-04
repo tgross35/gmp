@@ -4036,6 +4036,9 @@ __GMP_DECLSPEC void __gmp_invalid_operation (void) ATTRIBUTE_NORETURN;
 #define PP_FIRST_OMITTED 3
 #endif
 
+#define mpn_probab_perfect_square_p __MPN(probab_perfect_square_p)
+__GMP_DECLSPEC int mpn_probab_perfect_square_p (mp_srcptr, mp_size_t);
+
 typedef struct
 {
   mp_limb_t d0, d1;

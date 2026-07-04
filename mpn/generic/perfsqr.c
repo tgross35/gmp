@@ -1,8 +1,12 @@
 /* mpn_perfect_square_p(u,usize) -- Return non-zero if U is a perfect square,
    zero otherwise.
 
-Copyright 1991, 1993, 1994, 1996, 1997, 2000-2002, 2005, 2012 Free Software
-Foundation, Inc.
+mpn_probab_perfect_square_p(u, usize) -- Returns non-zero if U not trivially
+disqualified from being a perfect square checks. Returns zero if impossible
+to be a perfect square.
+
+Copyright 1991, 1993, 1994, 1996, 1997, 2000-2002, 2005, 2012, 2026 Free
+Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -176,11 +180,9 @@ see https://www.gnu.org/licenses/.  */
 
 
 int
-mpn_perfect_square_p (mp_srcptr up, mp_size_t usize)
+mpn_probab_perfect_square_p (mp_srcptr up, mp_size_t usize)
 {
   ASSERT (usize >= 1);
-
-  TRACE (gmp_printf ("mpn_perfect_square_p %Nd\n", up, usize));
 
   /* The first test excludes 212/256 (82.8%) of the perfect square candidates
      in O(1) time.  */
@@ -217,6 +219,17 @@ mpn_perfect_square_p (mp_srcptr up, mp_size_t usize)
      according to their residues modulo small primes (or powers of
      primes).  See perfsqr.h.  */
   PERFSQR_MOD_TEST (up, usize);
+  return 1;
+}
+
+
+int
+mpn_perfect_square_p (mp_srcptr up, mp_size_t usize)
+{
+  TRACE (gmp_printf ("mpn_perfect_square_p %Nd\n", up, usize));
+
+  if (! mpn_probab_perfect_square_p (up, usize))
+    return 0;
 
 
   /* For the third and last test, we finally compute the square root,
