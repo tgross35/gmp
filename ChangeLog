@@ -1,3 +1,17 @@
+2026-07-04 Seth Troisi <sethtroisi@google.com>
+
+	* mpn/generic/perfsqr.c: New function mpn_probab_perfect_square_p.
+	* gmp-impl.h: Declare its prototype.
+
+	* mpz/perfsqrt.c: New file, implementing mpz_perfect_square_root.
+	* mpz/Makefile.am (libmpz_la_SOURCES): Add the new file.
+	* Makefile.am (MPZ_OBJECTS): Update accordingly.
+	* gmp-h.in: Prototype for the new function.
+	* doc/gmp.texi: Document the new function.
+	* tests/mpz/t-perfsqr.c: Test it.
+
+	* doc/tasks.html:Remove mpz_sqrt_if_perfect_square, done.
+
 2026-06-26  Marco Bodrato <marco.bodrato@protonmail.com>
 
 	* mpz/isetbit.c: New file, implementing mpz_init_setbit.
@@ -11,6 +25,11 @@
 	* gen-bases.c: Likewise.
 	* gen-trialdivtab.c: Likewise.
 	* bootstrap.c: Likewise.
+
+	* mpz/stronglucas.c: Use mpn_perfect_square_p instead of mpz_.
+	* mpz/millerrabin.c: Compute nm only when needed.
+	* mpn/generic/bsqrtinv.c: Higher order iteration step on half-limb.
+	* primesieve.c: Move a branch outside the loop.
 
 	* mpz/stronglucas.c: Use mpn_perfect_square_p instead of mpz_.
 	* mpz/millerrabin.c: Compute nm only when needed.
