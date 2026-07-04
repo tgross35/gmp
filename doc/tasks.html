@@ -579,10 +579,6 @@ either already been taken care of, or have become irrelevant.
      probably simplest to regard this as a compiler compatibility issue, and
      leave it to users or sysadmins to ensure application and library code is
      built the same.
-<li> <code>mpz_sqrt_if_perfect_square</code>: When
-     <code>mpz_perfect_square_p</code> does its tests it calculates a square
-     root and then discards it.  For some applications it might be useful to
-     return that root.  Suggested by Jason Moxham.
 <li> <code>mpz_get_ull</code>, <code>mpz_set_ull</code>,
      <code>mpz_get_sll</code>, <code>mpz_get_sll</code>: Conversions for
      <code>long long</code>.  These would aid interoperability, though a

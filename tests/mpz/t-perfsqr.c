@@ -1,4 +1,4 @@
-/* Test mpz_perfect_square_p.
+/* Test mpz_perfect_square_p and mpz_perfect_square_root.
 
 Copyright 2000-2002 Free Software Foundation, Inc.
 
@@ -26,10 +26,10 @@ the GNU MP Library test suite.  If not, see https://www.gnu.org/licenses/.  */
 #include "mpn/perfsqr.h"
 
 
-/* check_modulo() exercises mpz_perfect_square_p on squares which cover each
-   possible quadratic residue to each divisor used within
-   mpn_perfect_square_p, ensuring those residues aren't incorrectly claimed
-   to be non-residues.
+/* check_modulo() exercises mpz_perfect_square_p/mpz_perfect_square_root on
+   squares which cover each possible quadratic residue to each divisor used
+   within mpn_perfect_square_p, ensuring those residues aren't incorrectly
+   claimed to be non-residues.
 
    Each divisor is taken separately.  It's arranged that n is congruent to 0
    modulo the other divisors, 0 of course being a quadratic residue to any
@@ -45,11 +45,13 @@ check_modulo (void)
   static const unsigned long  divisor[] = PERFSQR_DIVISORS;
   unsigned long  i, j;
 
-  mpz_t  alldiv, others, n;
+  mpz_t  alldiv, others, n, root, rop;
 
   mpz_init (alldiv);
   mpz_init (others);
+  mpz_init (root);
   mpz_init (n);
+  mpz_init (rop);
 
   /* product of all divisors */
   mpz_set_ui (alldiv, 1L);
@@ -67,12 +69,23 @@ check_modulo (void)
       for (j = 1; j <= divisor[i]; j++)
         {
           /* square */
-          mpz_mul_ui (n, others, j);
-          mpz_mul (n, n, n);
+          mpz_mul_ui (root, others, j);
+          mpz_mul (n, root, root);
           if (! mpz_perfect_square_p (n))
             {
               printf ("mpz_perfect_square_p got 0, want 1\n");
               mpz_trace ("  n", n);
+              abort ();
+            }
+          if (! mpz_perfect_square_root (rop, n))
+            {
+              printf ("mpz_perfect_square_root got 0, want 1\n");
+              mpz_trace ("  n", n);
+              abort ();
+            }
+          if (! mpz_cmp (rop, n))
+            {
+              gmp_printf ("mpz_perfect_square_root rop %Zd, want %Zd\n", rop, n);
               abort ();
             }
         }
@@ -80,19 +93,61 @@ check_modulo (void)
 
   mpz_clear (alldiv);
   mpz_clear (others);
+  mpz_clear (root);
   mpz_clear (n);
+  mpz_clear (rop);
 }
 
+/* Check negative, 0, and 1 */
+void
+check_edge_cases (void)
+{
+  mpz_t  n, root;
+  mpz_init (n);
+  mpz_init (root);
+
+  mpz_set_si(n, -4);
+  if (mpz_perfect_square_p (n))
+    {
+      printf ("mpz_perfect_square_p -4 not a square\n");
+      abort ();
+    }
+  if (mpz_perfect_square_root (root, n))
+    {
+      printf ("mpz_perfect_square_root -4 not a square\n");
+      abort ();
+    }
+
+  // 0 and 1 are both perfect squares with respective root 0 and 1.
+  for (unsigned int m = 0; m < 2; m++)
+    {
+      mpz_set_ui(n, m);
+      if (! mpz_perfect_square_p (n))
+        {
+          printf ("mpz_perfect_square_p %u should be a square\n", m);
+          abort ();
+        }
+      if (! mpz_perfect_square_root (root, n) || mpz_cmp_ui (root, m) != 0)
+        {
+          printf ("mpz_perfect_square_root %u should have root = %u\n", m, m);
+          abort ();
+        }
+    }
+
+  mpz_clear (root);
+  mpz_clear (n);
+}
 
 /* Exercise mpz_perfect_square_p compared to what mpz_sqrt says. */
 void
 check_sqrt (int reps)
 {
-  mpz_t x2, x2t, x;
+  mpz_t x2, x2t, x, rop;
   mp_size_t x2n;
   int res;
   int i;
-  /* int cnt = 0; */
+  int want;
+  int cnt = 0;
   gmp_randstate_ptr rands = RANDS;
   mpz_t bs;
 
@@ -101,37 +156,77 @@ check_sqrt (int reps)
   mpz_init (x2);
   mpz_init (x);
   mpz_init (x2t);
+  mpz_init (rop);
 
   for (i = 0; i < reps; i++)
     {
       mpz_urandomb (bs, rands, 9);
       x2n = mpz_get_ui (bs);
       mpz_rrandomb (x2, rands, x2n);
-      /* mpz_out_str (stdout, -16, x2); puts (""); */
 
       res = mpz_perfect_square_p (x2);
       mpz_sqrt (x, x2);
       mpz_mul (x2t, x, x);
+      want = mpz_cmp(x2, x2t) == 0;
 
-      if (res != (mpz_cmp (x2, x2t) == 0))
+      if (res != want)
         {
           printf    ("mpz_perfect_square_p and mpz_sqrt differ\n");
           mpz_trace ("   x  ", x);
           mpz_trace ("   x2 ", x2);
           mpz_trace ("   x2t", x2t);
           printf    ("   mpz_perfect_square_p %d\n", res);
-          printf    ("   mpz_sqrt             %d\n", mpz_cmp (x2, x2t) == 0);
+          printf    ("   mpz_sqrt             %d\n", want);
           abort ();
         }
 
-      /* cnt += res != 0; */
+      res = mpz_perfect_square_root (rop, x2);
+      if (res != want)
+        {
+          printf    ("mpz_perfect_square_root and mpz_sqrt differ\n");
+          mpz_trace ("   x  ", x);
+          mpz_trace ("   x2 ", x2);
+          mpz_trace ("   x2t", x2t);
+          printf    ("   mpz_perfect_square_root %d\n", res);
+          printf    ("   mpz_sqrt                %d\n", want);
+          abort ();
+        }
+      if (res && mpz_cmp(x, rop) != 0)
+        {
+          printf    ("mpz_perfect_square_root and mpz_sqrt differ\n");
+          mpz_trace ("   x  ", x);
+          mpz_trace ("   x2 ", x2);
+          mpz_trace ("   x2t", x2t);
+          mpz_trace ("   mpz_perfect_square_root rop", rop);
+          mpz_trace ("   mpz_sqrt", x);
+          abort ();
+        }
+      /* Check that same variable as input and output works */
+      mpz_set(rop, x2);
+      res = mpz_perfect_square_root (rop, rop);
+      if (res != want || (res && mpz_cmp(x, rop) != 0))
+        {
+          printf    ("mpz_perfect_square_root differ when output == input\n");
+          mpz_trace ("   x2 ", x2);
+          printf    ("   mpz_perfect_square_root %d\n", res);
+          mpz_trace ("   mpz_perfect_square_root rop ", rop);
+          abort ();
+        }
+
+      cnt += res != 0;
     }
+
+  if (reps > 1000 && cnt == 0) {
+    printf("No perfect squares found in %d reps", reps);
+    abort();
+  }
   /* printf ("%d/%d perfect squares\n", cnt, reps); */
 
   mpz_clear (bs);
   mpz_clear (x2);
   mpz_clear (x);
   mpz_clear (x2t);
+  mpz_clear (rop);
 }
 
 
@@ -146,6 +241,7 @@ main (int argc, char **argv)
   if (argc == 2)
      reps = atoi (argv[1]);
 
+  check_edge_cases ();
   check_modulo ();
   check_sqrt (reps);
 

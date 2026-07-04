@@ -3606,6 +3606,16 @@ Return non-zero if @var{op} is a perfect square, i.e., if the square root of
 be perfect squares.
 @end deftypefun
 
+@deftypefun int mpz_perfect_square_root (mpz_t @var{rop}, const mpz_t @var{op})
+@cindex Perfect square functions
+@cindex Root testing functions
+Return non-zero and sets @var{rop} to the square root if @var{op} is a perfect
+square, i.e., if the square root of @var{op} is an integer.  Under this
+definition both 0 and 1 are considered to be perfect squares and @var{rop} is
+set to @var{op} in both cases. If @var{op} is not a perfect square the value of
+@var{rop} is undefined.
+@end deftypefun
+
 
 @need 2000
 @node Number Theoretic Functions, Integer Comparisons, Integer Roots, Integer Functions
@@ -9254,9 +9264,10 @@ optimized.
 A significant fraction of non-squares can be quickly identified by checking
 whether the input is a quadratic residue modulo small integers.
 
-@code{mpz_perfect_square_p} first tests the input mod 256, which means just
-examining the low byte.  Only 44 different values occur for squares mod 256,
-so 82.8% of inputs can be immediately identified as non-squares.
+@code{mpz_perfect_square_p}/@code{mpz_perfect_square_root} first tests the input
+mod 256, which means just examining the low byte.  Only 44 different values
+occur for squares mod 256, so 82.8% of inputs can be immediately identified
+as non-squares.
 
 On a 32-bit system similar tests are done mod 9, 5, 7, 13 and 17, for a total
 99.25% of inputs identified as non-squares.  On a 64-bit system 97 is tested

@@ -975,6 +975,9 @@ __GMP_DECLSPEC int mpz_perfect_power_p (mpz_srcptr) __GMP_ATTRIBUTE_PURE;
 __GMP_DECLSPEC int mpz_perfect_square_p (mpz_srcptr) __GMP_ATTRIBUTE_PURE;
 #endif
 
+#define mpz_perfect_square_root __gmpz_perfect_square_root
+__GMP_DECLSPEC int mpz_perfect_square_root (mpz_ptr, mpz_srcptr);
+
 #define mpz_popcount __gmpz_popcount
 #if __GMP_INLINE_PROTOTYPES || defined (__GMP_FORCE_mpz_popcount)
 __GMP_DECLSPEC mp_bitcnt_t mpz_popcount (mpz_srcptr) __GMP_NOTHROW __GMP_ATTRIBUTE_PURE;
