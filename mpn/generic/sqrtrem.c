@@ -501,7 +501,7 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
   TMP_MARK;
   if (((nn & 1) | c) != 0)
     {
-      mp_limb_t s0[1], mask;
+      mp_limb_t s0, mask;
       mp_ptr tp, scratch;
       TMP_ALLOC_LIMBS_2 (tp, 2 * tn, scratch, (tn >> 1) + 1);
       tp[0] = 0;	     /* needed only when 2*tn > nn, but saves a test */
@@ -514,9 +514,19 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
       rl = mpn_dc_sqrtrem (sp, tp, tn, (rp == NULL) ? mask - 1 : 0, scratch);
       /* We have 2^(2k)*N = S^2 + R where k = c + (2tn-nn)*GMP_NUMB_BITS/2,
 	 thus 2^(2k)*N = (S-s0)^2 + 2*S*s0 - s0^2 + R where s0=S mod 2^k */
-      s0[0] = sp[0] & mask;	/* S mod 2^k */
-      rl += mpn_addmul_1 (tp, sp, tn, 2 * s0[0]);	/* R = R + 2*s0*S */
-      cc = mpn_submul_1 (tp, s0, 1, s0[0]);
+      s0 = sp[0] & mask;	/* S mod 2^k */
+      rl += mpn_addmul_1 (tp, sp, tn, 2 * s0);	/* R = R + 2*s0*S */
+#if 0
+      cc = mpn_submul_1 (tp, &s0, 1, s0);
+#else
+      {
+	mp_limb_t p0, t0 = *tp;
+	umul_ppmm (cc, p0, s0, s0);
+	p0 = t0 - p0;
+	cc += t0 < p0; /* Borrow turns into a carry */
+	*tp = p0;
+      }
+#endif
       rl -= (tn > 1) ? mpn_sub_1 (tp + 1, tp + 1, tn - 1, cc) : cc;
       mpn_rshift (sp, sp, tn, c);
       tp[tn] = rl;
