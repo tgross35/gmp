@@ -1,6 +1,6 @@
 /*
 
-Copyright 2012, 2014, Free Software Foundation, Inc.
+Copyright 2012, 2014, 2026, Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -31,25 +31,24 @@ static int
 sqrtrem_valid_p (const mpz_t u, const mpz_t s, const mpz_t r)
 {
   mpz_t t;
+  int ret;
 
   mpz_init (t);
   mpz_mul (t, s, s);
   mpz_sub (t, u, t);
   if (mpz_sgn (t) < 0 || mpz_cmp (t, r) != 0)
     {
-      mpz_clear (t);
-      return 0;
+      ret = 0;
     }
-  mpz_add_ui (t, s, 1);
-  mpz_mul (t, t, t);
-  if (mpz_cmp (t, u) <= 0)
+  else
     {
-      mpz_clear (t);
-      return 0;
+      mpz_add_ui (t, s, 1);
+      mpz_mul (t, t, t);
+      ret = mpz_cmp (t, u) > 0;
     }
 
   mpz_clear (t);
-  return 1;
+  return ret;
 }
 
 void
@@ -105,6 +104,7 @@ void
 testmain (int argc, char **argv)
 {
   unsigned i;
+  int res;
   mpz_t u, s, r;
 
   mpz_init (s);
@@ -117,9 +117,23 @@ testmain (int argc, char **argv)
       abort ();
     }
 
+  /* FIXME: We should also check that r is still a valid mpz_t */
+  if (mpz_perfect_square_root (r, u))
+    {
+      fprintf (stderr, "mpz_perfect_square_root failed on -1.\n");
+      abort ();
+    }
+
   if (!mpz_perfect_square_p (s))
     {
       fprintf (stderr, "mpz_perfect_square_p failed on 0.\n");
+      abort ();
+    }
+
+  res = mpz_perfect_square_root (r, s);
+  if (!res || mpz_cmp_ui (r, 0) != 0)
+    {
+      fprintf (stderr, "mpz_perfect_square_root failed on 0.\n");
       abort ();
     }
 
@@ -153,27 +167,48 @@ testmain (int argc, char **argv)
 	mpz_sub_ui (u, u, 1);
       }
 
-      if ((mpz_sgn (u) <= 0 || (i & 1)) ?
-	  mpz_perfect_square_p (u) :
-	  mpn_perfect_square_p (mpz_limbs_read (u), mpz_size (u)))
+      if (i & 2)
 	{
-	  fprintf (stderr, "mp%s_perfect_square_p failed on non square:\n",
-		   (mpz_sgn (u) <= 0 || (i & 1)) ? "z" : "n");
-	  dump ("u", u);
-	  abort ();
-	}
+	  if ((mpz_sgn (u) <= 0 || (i & 1)) ?
+	      mpz_perfect_square_p (u) :
+	      mpn_perfect_square_p (mpz_limbs_read (u), mpz_size (u)))
+	    {
+	      fprintf (stderr, "mp%s_perfect_square_p failed on non square:\n",
+		       (mpz_sgn (u) <= 0 || (i & 1)) ? "z" : "n");
+	      dump ("u", u);
+	      abort ();
+	    }
 
-      mpz_mul (u, s, s);
-      if (!((mpz_sgn (u) <= 0 || (i & 1)) ?
-	    mpz_perfect_square_p (u) :
-	    mpn_perfect_square_p (mpz_limbs_read (u), mpz_size (u))))
+	  mpz_mul (u, s, s);
+	  if (!((mpz_sgn (u) <= 0 || (i & 1)) ?
+		mpz_perfect_square_p (u) :
+		mpn_perfect_square_p (mpz_limbs_read (u), mpz_size (u))))
+	    {
+	      fprintf (stderr, "mp%s_perfect_square_p failed on square:\n",
+		       (mpz_sgn (u) <= 0 || (i & 1)) ? "z" : "n");
+	      dump ("u", u);
+	      abort ();
+	    }
+	}
+      else
 	{
-	  fprintf (stderr, "mp%s_perfect_square_p failed on square:\n",
-		   (mpz_sgn (u) <= 0 || (i & 1)) ? "z" : "n");
-	  dump ("u", u);
-	  abort ();
-	}
+	  /* FIXME: We should also check that r is still a valid mpz_t */
+	  if (mpz_perfect_square_root (r, u))
+	    {
+	      fprintf (stderr, "mpz_perfect_square_root failed on non square:\n");
+	      dump ("u", u);
+	      abort ();
+	    }
 
+	  mpz_mul (u, s, s);
+	  res = mpz_perfect_square_root (r, u);
+	  if (!res || mpz_cmp (r, s) != 0)
+	    {
+	      fprintf (stderr, "mpz_perfect_square_root failed on square:\n");
+	      dump ("u", u);
+	      abort ();
+	    }
+	}
     }
   mpz_clear (u);
   mpz_clear (s);
