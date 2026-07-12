@@ -2,7 +2,8 @@
 
    Test all relevant functions except:
 	mpz_bin_ui
-	mpz_nextprime
+	mpz_{next,prev}prime
+	mpz_perfect_square_root
 	mpz_mul_si
 	mpz_addmul_ui (should this really allow a+=a*c?)
 

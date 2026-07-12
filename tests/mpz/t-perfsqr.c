@@ -1,6 +1,6 @@
 /* Test mpz_perfect_square_p and mpz_perfect_square_root.
 
-Copyright 2000-2002 Free Software Foundation, Inc.
+Copyright 2000-2002, 2026 Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library test suite.
 
@@ -117,6 +117,7 @@ check_edge_cases (void)
       printf ("mpz_perfect_square_root -4 not a square\n");
       abort ();
     }
+  MPZ_CHECK_FORMAT (root);
 
   // 0 and 1 are both perfect squares with respective root 0 and 1.
   for (unsigned int m = 0; m < 2; m++)
@@ -191,6 +192,7 @@ check_sqrt (int reps)
           printf    ("   mpz_sqrt                %d\n", want);
           abort ();
         }
+      MPZ_CHECK_FORMAT (rop);
       if (res && mpz_cmp(x, rop) != 0)
         {
           printf    ("mpz_perfect_square_root and mpz_sqrt differ\n");
@@ -204,6 +206,7 @@ check_sqrt (int reps)
       /* Check that same variable as input and output works */
       mpz_set(rop, x2);
       res = mpz_perfect_square_root (rop, rop);
+      MPZ_CHECK_FORMAT (rop);
       if (res != want || (res && mpz_cmp(x, rop) != 0))
         {
           printf    ("mpz_perfect_square_root differ when output == input\n");
@@ -217,8 +220,7 @@ check_sqrt (int reps)
     }
 
   if (reps > 1000 && cnt == 0) {
-    printf("No perfect squares found in %d reps", reps);
-    abort();
+    printf("No perfect squares found in %d reps\n", reps);
   }
   /* printf ("%d/%d perfect squares\n", cnt, reps); */
 
