@@ -1,3 +1,10 @@
+2026-07-12  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* mini-gmp.c (mpz_perfect_square_root): New function.
+	(mpz_perfect_square_p): Use it.
+	* mini-gmp.h: Add declaration.
+	* tests/t-sqrt.c: Test the new function.
+
 2026-06-26  Marco Bodrato <marco.bodrato@protonmail.com>
 
 	* mini-gmp.c (mpz_init_setbit): New function.

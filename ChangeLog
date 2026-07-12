@@ -1,3 +1,10 @@
+2026-07-12  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* tests/mpz/t-perfsqr.c: Check the format of return values.
+
+	* mpn/generic/sqrtrem.c (mpn_divappr_q): Return the highest limb
+	instead of writing it.
+
 2026-07-04 Seth Troisi <sethtroisi@google.com>
 
 	* mpn/generic/perfsqr.c: New function mpn_probab_perfect_square_p.
