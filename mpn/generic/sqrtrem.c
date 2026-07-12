@@ -276,7 +276,7 @@ mpn_dc_sqrtrem (mp_ptr sp, mp_ptr np, mp_size_t n, mp_limb_t approx, mp_ptr scra
 }
 
 #if USE_DIVAPPR_Q
-static void
+static mp_limb_t
 mpn_divappr_q (mp_ptr qp, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, mp_ptr scratch)
 {
   gmp_pi1_t inv;
@@ -300,7 +300,7 @@ mpn_divappr_q (mp_ptr qp, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn
       qh = mpn_mu_divappr_q (qp, np, nn, dp, dn, TMP_ALLOC_LIMBS (itch));
       TMP_FREE;
     }
-  qp [nn - dn] = qh;
+  return qh;
 }
 #endif
 
@@ -344,7 +344,7 @@ mpn_dc_sqrt (mp_ptr sp, mp_srcptr np, mp_size_t n, unsigned nsh, unsigned odd)
   qp = tp + n + 1; /* l + 2 */
   TRACE(printf("div(appr)_q(,,%u,,%u) -> %u \n", (unsigned) n+1, (unsigned) h, (unsigned) (n + 1 - h + 1)));
 #if USE_DIVAPPR_Q
-  mpn_divappr_q (qp, tp, n + 1, sp + l, h, scratch);
+  qp [l + 1] = mpn_divappr_q (qp, tp, n + 1, sp + l, h, scratch);
 #else
   mpn_div_q (qp, tp, n + 1, sp + l, h, scratch);
 #endif
