@@ -8,8 +8,8 @@
    IN FACT, IT IS ALMOST GUARANTEED THAT THEY WILL CHANGE OR DISAPPEAR IN A
    FUTURE GMP RELEASE.
 
-Copyright 1999-2002, 2004, 2005, 2008, 2010, 2012, 2015, 2017 Free Software
-Foundation, Inc.
+Copyright 1999-2002, 2004, 2005, 2008, 2010, 2012, 2015, 2017, 2026
+Free Software Foundation, Inc.
 
 This file is part of the GNU MP Library.
 
@@ -101,7 +101,7 @@ static const unsigned char invsqrttab[384] = /* The common 0x100 was removed */
   0x02,0x02,0x01,0x01,0x01,0x01,0x00,0x00  /* sqrt(1/1f8)..sqrt(1/1ff) */
 };
 
-/* Compute s = floor(sqrt(a0)), and *rp = a0 - s^2.  */
+/* Compute *sp = floor(sqrt(a0)), and returns a0 - (*sp)^2.  */
 
 #if GMP_NUMB_BITS > 32
 #define MAGIC CNST_LIMB(0x10000000000)	/* 0xffe7debbfc < MAGIC < 0x232b1850f410 */
@@ -110,7 +110,7 @@ static const unsigned char invsqrttab[384] = /* The common 0x100 was removed */
 #endif
 
 static mp_limb_t
-mpn_sqrtrem1 (mp_ptr rp, mp_limb_t a0)
+mpn_sqrtrem1 (mp_ptr sp, mp_limb_t a0)
 {
 #if GMP_NUMB_BITS > 32
   mp_limb_t a1;
@@ -160,8 +160,8 @@ mpn_sqrtrem1 (mp_ptr rp, mp_limb_t a0)
       x0++;
     }
 
-  *rp = a0 - x2;
-  return x0;
+  *sp = x0;
+  return a0 - x2;
 }
 
 
@@ -190,8 +190,8 @@ mpn_sqrtrem2 (mp_ptr sp, mp_ptr rp, mp_srcptr np)
   ASSERT (np[1] >= GMP_NUMB_HIGHBIT / 2);
 
   np0 = np[0];
-  sp0 = mpn_sqrtrem1 (rp, np[1]);
-  rp0 = rp[0];
+  rp0 = mpn_sqrtrem1 (sp, np[1]);
+  sp0 = sp[0];
   /* rp0 <= 2*sp0 < 2^(Prec + 1) */
   rp0 = (rp0 << (Prec - 1)) + (np0 >> (Prec + 1));
   q = rp0 / sp0;
@@ -455,14 +455,14 @@ mpn_sqrtrem (mp_ptr sp, mp_ptr rp, mp_srcptr np, mp_size_t nn)
   if (nn == 1) {
     if (c == 0)
       {
-	sp[0] = mpn_sqrtrem1 (&rl, high);
+	rl = mpn_sqrtrem1 (sp, high);
 	if (rp != NULL)
 	  rp[0] = rl;
       }
     else
       {
-	cc = mpn_sqrtrem1 (&rl, high << (2*c)) >> c;
-	sp[0] = cc;
+	rl = mpn_sqrtrem1 (sp, high << (2*c));
+	cc = sp[0] >>= c;
 	if (rp != NULL)
 	  rp[0] = rl = high - cc*cc;
       }
