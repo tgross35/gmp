@@ -231,6 +231,79 @@ check_sqrt (int reps)
   mpz_clear (rop);
 }
 
+/* Exercise mpz_perfect_square_p on large squares. */
+void
+check_sqares (int reps)
+{
+  mpz_t x2, x, rop;
+  mp_size_t xn;
+  int res;
+  int i;
+  int want;
+  mp_bitcnt_t l, h;
+  gmp_randstate_ptr rands = RANDS;
+  mpz_t bs;
+
+  mpz_init (bs);
+
+  mpz_init (x2);
+  mpz_init (x);
+  mpz_init (rop);
+
+  for (i = 0; i < reps; i++)
+    {
+      mpz_urandomb (bs, rands, 13);
+      xn = mpz_get_ui (bs) + 100;
+      mpz_rrandomb (x, rands, xn);
+
+      mpz_mul (x2, x, x);
+      res = mpz_perfect_square_root (rop, x2);
+      want = 1;
+
+      if (res != want || mpz_cmp (rop, x) !=0)
+        {
+          printf    ("mpz_perfect_square_p did not detect a square [%i]\n", i);
+          mpz_trace ("  x2  ", x2);
+          mpz_trace ("  x   ", x);
+          mpz_trace ("  rop ", rop);
+	  mpz_sub (rop, rop, x);
+          mpz_trace ("rop-x ", rop);
+          printf    ("  mpz_perfect_square_p %d\n", res);
+          printf    ("  want                 %d\n", want);
+          abort ();
+        }
+
+      l = mpz_scan1 (x2, 0);
+      h = mpz_sizeinbase (x2, 2);
+
+      h = MAX (h, l + 5);
+      mpz_combit (x2, l + 3 + gmp_urandomm_ui (rands, h - l - 4));
+
+      res = mpz_perfect_square_root (rop, x2);
+      MPZ_CHECK_FORMAT (rop);
+      want = 0;
+
+      if (res != want)
+        {
+          printf    ("mpz_perfect_square_p did not detect a non square [%i]\n", i);
+          mpz_trace ("  x2  ", x2);
+          mpz_trace ("  x   ", x);
+          mpz_trace ("  rop ", rop);
+	  mpz_sub (rop, rop, x);
+          mpz_trace ("rop-x ", rop);
+          printf    ("  mpz_perfect_square_p %d\n", res);
+          printf    ("  want                 %d\n", want);
+          abort ();
+        }
+
+    }
+
+  mpz_clear (bs);
+  mpz_clear (x2);
+  mpz_clear (x);
+  mpz_clear (rop);
+}
+
 
 int
 main (int argc, char **argv)
@@ -246,6 +319,7 @@ main (int argc, char **argv)
   check_edge_cases ();
   check_modulo ();
   check_sqrt (reps);
+  check_sqares (reps >> 2);
 
   tests_end ();
   exit (0);
