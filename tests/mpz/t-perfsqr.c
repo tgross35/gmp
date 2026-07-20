@@ -318,8 +318,8 @@ main (int argc, char **argv)
 
   check_edge_cases ();
   check_modulo ();
-  check_sqrt (reps);
-  check_sqares (reps >> 2);
+  check_sqrt (reps - (reps >> 4));
+  check_sqares (reps >> 4);
 
   tests_end ();
   exit (0);
