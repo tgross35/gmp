@@ -30,7 +30,8 @@ main (int argc, char **argv)
 {
   gmp_randstate_ptr rands;
 
-  mp_ptr ap, rp, pp, scratch;
+  mp_ptr ap, rp, pp, sp;
+  mp_limb_t before_rp, before_sp;
   int count = COUNT;
   unsigned i;
   TMP_DECL;
@@ -43,14 +44,17 @@ main (int argc, char **argv)
   rands = RANDS;
 
   ap = TMP_ALLOC_LIMBS (MAX_LIMBS);
-  rp = TMP_ALLOC_LIMBS (MAX_LIMBS);
+  rp = TMP_ALLOC_LIMBS (MAX_LIMBS + 2) + 1;
   pp = TMP_ALLOC_LIMBS (MAX_LIMBS);
-  scratch = TMP_ALLOC_LIMBS (3*MAX_LIMBS);
+  sp = TMP_ALLOC_LIMBS (3*MAX_LIMBS + 2) + 1;
 
+  before_rp = rp [-1] = gmp_urandomm_ui (rands, GMP_NUMB_MAX);
+  before_sp = sp [-1] = gmp_urandomm_ui (rands, GMP_NUMB_MAX);
   for (i = 0; i < count; i++)
     {
       mp_size_t n;
       mp_bitcnt_t bn;
+      mp_limb_t after_rp, after_sp;
       int res;
 
       n = 1 + gmp_urandomm_ui (rands, MAX_LIMBS);
@@ -63,19 +67,35 @@ main (int argc, char **argv)
       if (i & 0xf)
 	ap[0] = (ap[0] | 7) ^ 6;
 
-      bn = 1 + gmp_urandomm_ui (rands, GMP_NUMB_BITS - (n == 1));
+      bn = 1 + gmp_urandomm_ui (rands, GMP_NUMB_BITS - 2*(n == 1));
 
-      res = mpn_bsqrt (rp, ap, n * GMP_NUMB_BITS - bn, scratch);
+      after_rp = rp [n - (bn >= GMP_NUMB_BITS - 1)] = gmp_urandomm_ui (rands, GMP_NUMB_MAX);
+      after_sp = sp [3 * n] = gmp_urandomm_ui (rands, GMP_NUMB_MAX);
+      res = mpn_bsqrt (rp, ap, n * GMP_NUMB_BITS - bn, sp);
+      if (rp [n - (bn >= GMP_NUMB_BITS - 1)] != after_rp || rp [-1] != before_rp ||
+	  sp [3 * n] != after_sp || sp [-1] != before_sp)
+	{
+	  gmp_fprintf (stderr,
+		       "mpn_bsqrt memoty bounds violated: %u limbs, - %u bits, res %i [%i]\n",
+		       (unsigned) n, (unsigned) bn, res, i);
+	  gmp_fprintf (stderr, "before_rp: %Mx <> %Mx, \t", before_rp, rp[-1]);
+	  gmp_fprintf (stderr, " after_rp: %Mx <> %Mx\n", after_rp, rp[n - (bn >= GMP_NUMB_BITS - 1)]);
+	  gmp_fprintf (stderr, "before_sp: %Mx <> %Mx, \t", before_sp, sp[-1]);
+	  gmp_fprintf (stderr, " after_sp: %Mx <> %Mx\n", after_sp, sp[3 * n]);
+	  gmp_fprintf (stderr, "a     = %Nx\n", ap, n);
+	  abort ();
+	}
+
       if (!res && ((*ap & (7 >> ((n == 1) && (bn == GMP_NUMB_BITS - 1)))) != 1))
 	continue;
 
       mpn_sqrlo (pp, rp, n);
 
-      if ((!res == (!mpn_cmp (pp, ap, n - (bn > 1)) &&
-		    !((pp[n - 1] ^ ap[n - 1]) & GMP_NUMB_MAX >> (bn - 1)))))
+      if (!res || ((n!=1) && (mpn_cmp (pp, ap, n - 1) != 0)) ||
+	  ((bn != GMP_NUMB_BITS) && ((pp[n - 1] ^ ap[n - 1]) & GMP_NUMB_MAX >> bn != 0)))
 	{
 	  gmp_fprintf (stderr,
-		       "mpn_bsqrt returned bad result: %u limbs, %u bits, res %i [%i]\n",
+		       "mpn_bsqrt returned bad result: %u limbs, - %u bits, res %i [%i]\n",
 		       (unsigned) n, (unsigned) bn, res, i);
 	  gmp_fprintf (stderr, "a     = %Nx\n", ap, n);
 	  gmp_fprintf (stderr, "r     = %Nx\n", rp, n);
