@@ -1,3 +1,8 @@
+2026-07-20  Marco Bodrato <marco.bodrato@protonmail.com>
+
+	* mpn/generic/bsqrt.c: Use a last iteration to increase precision
+	* tests/mpn/t-bsqrt.c: Check exactly the required bits.
+
 2026-07-12  Marco Bodrato <marco.bodrato@protonmail.com>
 
 	* tests/mpz/t-perfsqr.c: Check the format of return values.
