@@ -52,7 +52,7 @@ mpz_perfect_square_root (mpz_ptr rop, mpz_srcptr op)
   if (! mpn_probab_perfect_square_p (PTR (op), u_size))
     return 0;
 
-  /* This is the precise size of sqrt(op) because leading limp is non-zero. */
+  /* This is the precise size of sqrt(op) because leading limb is non-zero. */
   mp_size_t rop_size = (SIZ (op) + 1) / 2;
 
   /* mpn_sqrtrem doesn't allow sp == np */
