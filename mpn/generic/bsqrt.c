@@ -59,7 +59,7 @@ mpn_bsqrt (mp_ptr rp, mp_srcptr ap, mp_bitcnt_t nb, mp_ptr tp)
     }
   else
     {
-      mp_size_t nn= 1 + nb / GMP_NUMB_BITS;
+      mp_size_t nn = 1 + nb / GMP_NUMB_BITS;
       if (nn <= 4) /* THINK: should we tune this? */
 	{
 	  mp_ptr sp = tp + nn;
