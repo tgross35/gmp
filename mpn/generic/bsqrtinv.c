@@ -88,7 +88,7 @@ mpn_bsqrtinv (mp_ptr rp, mp_srcptr yp, mp_bitcnt_t bnb, mp_ptr tp)
   ASSERT (bnb > 0);
 
 #ifndef BSQRTINV_RP_NOT_ZEROED
-  ASSERT (mpn_zero_p (rp, 1 + bnb / GMP_NUMB_BITS));
+  ASSERT ((bnb <= GMP_NUMB_BITS) || mpn_zero_p (rp, 1 + bnb / GMP_NUMB_BITS));
 #endif
   if (UNLIKELY (bnb == 1))
     {
