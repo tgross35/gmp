@@ -54,12 +54,9 @@ Niels Möller		gen-jacobitab.c,
 			mpz/nextprime.c, divexact.c, gcd.c, gcdext.c,
 			jacobi.c, combit.c, mini-gmp/mini-gmp.c.
 
-Marco Bodrato		mpn/generic/toom44_mul.c, toom4_sqr.c, toom53_mul.c,
-			toom62_mul.c, toom43_mul.c, toom52_mul.c, toom54_mul.c,
-			toom_interpolate_6pts.c, toom_couple_handling.c,
-			toom63_mul.c, toom_interpolate_8pts.c,
-			toom6h_mul.c, toom6_sqr.c, toom_interpolate_12pts.c,
-			toom8h_mul.c, toom8_sqr.c, toom_interpolate_16pts.c,
+Marco Bodrato		mpn/generic/toom{44,53,62,43,52,54,63,6h,8h}_mul.c,
+			toom_interpolate_{6,8,12,16}pts.c, toom{4,6,8}_sqr.c,
+			toom_couple_handling.c, bsqrtinv.c, bsqrt.c,
 			mulmod_bnm1.c, sqrmod_bnm1.c, nussbaumer_mul.c,
 			toom_eval_pm2.c, toom_eval_pm2rexp.c,
 			fib2m.c, strongfibo.c, mulmod_bknp1.c,
@@ -81,7 +78,8 @@ David Harvey		mpn/generic/add_err1_n.c, add_err2_n.c,
 			mulmid_basecase.asm,
 			mpn/x86_64/core2/aors_err1_n.asm.
 
-Martin Boij		mpn/generic/perfpow.c
+Martin Boij		mpn/generic/perfpow.c, original version of
+			bsqrtinv.c and bsqrt.c
 
 Marc Glisse		gmpxx.h improvements
 
@@ -105,6 +103,7 @@ Ulrich Weigand		Changes to support powerpc64le:
 			mpn/powerpc64/p6/{lshift,lshiftc,rshift}.asm,
 			mpn/powerpc64/vmx/popcount.asm.
 
-Seth Troisi		mpz/nextprime.c general speed-up and prevprime.
+Seth Troisi		mpz/nextprime.c general speed-up and prevprime,
+			perfsqrt.c.
 
 Marius Hillenbrand	mpn/s390_64/z13/*.c (later used as basis for asm code)
