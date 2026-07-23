@@ -276,7 +276,7 @@ check_sqares (int reps)
       l = mpz_scan1 (x2, 0);
       h = mpz_sizeinbase (x2, 2);
 
-      h = MAX (h, l + 5);
+      if (l >= h - 4) continue;
       mpz_combit (x2, l + 3 + gmp_urandomm_ui (rands, h - l - 4));
 
       res = mpz_perfect_square_root (rop, x2);
