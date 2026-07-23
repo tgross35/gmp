@@ -10882,6 +10882,9 @@ operands.
 
 Ulrich Weigand ported GMP to the powerpc64le ABI.
 
+Seth Troisi added @code{mpz_prevprime} and @code{mpz_perfect_square_root}.
+They also tuned the sieve limit for @code{mpz_nextprime}.
+
 (This list is chronological, not ordered after significance.  If you have
 contributed to GMP but are not listed above, please tell
 @email{gmp-devel@@gmplib.org} about the omission!)
