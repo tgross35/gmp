@@ -158,11 +158,14 @@ is_kth_power (mp_ptr rp, mp_srcptr np,
       b = 1 + (f - 1) / k;
       rn = 1 + (b - 1) / GMP_LIMB_BITS;
       mpn_brootinv (rp, ip, rn, k, tp);
-      if ((b % GMP_LIMB_BITS) != 0)
-	rp[rn - 1] &= (CNST_LIMB(1) << (b % GMP_LIMB_BITS)) - 1;
-      MPN_NORMALIZE (rp, rn);
-      if (pow_equals (np, n, rp, rn, k, f, tp) != 0)
-	return 1;
+      mp_limb_t mask = CNST_LIMB(1) << (b - 1) % GMP_LIMB_BITS;
+      /* If the espected highest bit is not set, it's not the root. */
+      if ((rp [rn - 1] & mask) != 0)
+	{
+	  rp[rn - 1] &= (mask << 1) - CNST_LIMB (1);
+	  if (pow_equals (np, n, rp, rn, k, f, tp) != 0)
+	    return 1;
+	}
     }
   MPN_ZERO (rp, rn); /* Untrash rp */
   return 0;
